@@ -143,8 +143,7 @@ fun MessageInput(
                         onValueChange = onValueChange,
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(24.dp),
-                        placeholder =
-                                @Composable { Text("Type a message...") },
+                        placeholder = @Composable { Text("Type a message...") },
                         colors =
                                 TextFieldDefaults.colors(
                                         focusedIndicatorColor = Color.Transparent,

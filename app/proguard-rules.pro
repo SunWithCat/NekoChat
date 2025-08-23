@@ -1,21 +1,15 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# 终极测试规则：保持App包名下的所有内容不被混淆
+-keep class com.sunwithcat.nekochat.data.model.** { *; }
+-keep class com.sunwithcat.nekochat.data.remote.** { *; }
+-keep class com.sunwithcat.nekochat.data.repository.** { *; }
+-keep class com.sunwithcat.nekochat.ui.chat.** { *; }
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# 使用R8全模式，对未保留的类剥离通用签名。挂起函数被包装在使用类型参数的continuation中。
+-keep,allowobfuscation,allowshrinking class kotlin.coroutines.Continuation
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# 如果不保留，R8完整模式将从返回类型中剥离通用签名。
+-if interface * { @retrofit2.http.* public *** *(...); }
+-keep,allowoptimization,allowshrinking,allowobfuscation class <3>
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# 在R8全模式下，对未保留的类剥离通用签名。
+-keep,allowobfuscation,allowshrinking class retrofit2.Response

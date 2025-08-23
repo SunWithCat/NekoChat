@@ -24,7 +24,7 @@ android {
         val localProperties = Properties()
         val localPropertiesFile = rootProject.file("local.properties")
         if (localPropertiesFile.exists()) {
-            localProperties.load(FileInputStream(localPropertiesFile)) // ✅ 现在可以直接使用 FileInputStream
+            localProperties.load(FileInputStream(localPropertiesFile)) 
         }
 
         // 将API Key添加到BuildConfig中
@@ -37,7 +37,8 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -53,7 +54,18 @@ android {
     }
     buildFeatures {
         compose = true
-        buildConfig = true // ✅ 确保这一行存在，它会启用 BuildConfig 的生成
+        buildConfig = true 
+    }
+    splits {
+        abi {
+            isEnable = true // 启用 ABI 拆分
+            reset()       // 清除之前的任何 ABI 配置
+
+            // 指定为哪些 CPU 架构生成 APK
+            include("armeabi-v7a", "arm64-v8a", "x86_64")
+
+            isUniversalApk = false
+        }
     }
 }
 
@@ -87,4 +99,6 @@ dependencies {
     // 日志拦截
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0") // 日志拦截器，方便调试
+
+    implementation("org.jetbrains.kotlin:kotlin-reflect:2.0.21") // 反射库
 }
