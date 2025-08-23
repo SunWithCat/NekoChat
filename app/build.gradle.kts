@@ -101,4 +101,6 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0") // 日志拦截器，方便调试
 
     implementation("org.jetbrains.kotlin:kotlin-reflect:2.0.21") // 反射库
+
+    implementation("com.github.jeziellago:compose-markdown:0.3.6")
 }

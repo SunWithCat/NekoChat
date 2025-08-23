@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState // 导入 rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.*
@@ -21,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sunwithcat.nekochat.data.model.Author
 import com.sunwithcat.nekochat.data.model.ChatMessage
+import dev.jeziellago.compose.markdowntext.MarkdownText
 
 @Composable
 fun ChatScreen(viewModel: ChatViewModel = androidx.lifecycle.viewmodel.compose.viewModel()) {
@@ -63,7 +65,7 @@ fun ChatScreen(viewModel: ChatViewModel = androidx.lifecycle.viewmodel.compose.v
                         ) {
                                 items(
                                         items = uiState.messages.reversed(),
-                                        key = { message -> message.hashCode() }
+                                        key = { message -> message.id }
                                 ) { message -> ChatMessageItem(message = message) }
                         }
 
@@ -112,15 +114,30 @@ fun ChatMessageItem(message: ChatMessage) {
                 modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                 contentAlignment = alignment
         ) {
-                Column {
-                        Text(
-                                text = message.content,
-                                modifier =
-                                        Modifier.clip(RoundedCornerShape(12.dp))
-                                                .background(backgroundColor)
-                                                .padding(horizontal = 16.dp, vertical = 8.dp),
-                                color = textColor
-                        )
+                Box(
+                        modifier =
+                                Modifier.clip(RoundedCornerShape(12.dp))
+                                        .background(backgroundColor)
+                                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                        SelectionContainer {
+                                if (isModel) {
+                                        MarkdownText(
+                                                markdown = message.content,
+                                                color = textColor,
+                                                style = MaterialTheme.typography.bodyLarge.copy(
+                                                        color = textColor
+                                                )
+                                        )
+
+                                } else {
+                                        Text(
+                                                text = message.content,
+                                                color = textColor,
+                                                style = MaterialTheme.typography.bodyLarge
+                                        )
+                                }
+                        }
                 }
         }
 }
