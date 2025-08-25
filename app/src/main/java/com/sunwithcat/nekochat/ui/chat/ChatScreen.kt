@@ -22,7 +22,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sunwithcat.nekochat.data.model.Author
 import com.sunwithcat.nekochat.data.model.ChatMessage
-//import dev.jeziellago.compose.markdowntext.MarkdownText
+
+// import dev.jeziellago.compose.markdowntext.MarkdownText
 
 @Composable
 fun ChatScreen(viewModel: ChatViewModel = androidx.lifecycle.viewmodel.compose.viewModel()) {
@@ -105,12 +106,7 @@ fun ChatScreen(viewModel: ChatViewModel = androidx.lifecycle.viewmodel.compose.v
                                 Text(
                                         text = "Based on Google Gemini-2.5-Flash",
                                         style = MaterialTheme.typography.bodySmall,
-                                        modifier = Modifier.padding(vertical = 2.dp)
-                                )
-                                Text(
-                                        text = "Developed by SunWithCat",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        modifier = Modifier.padding(bottom = 8.dp)
+                                        modifier = Modifier.padding(vertical = 6.dp)
                                 )
                         }
                 }
@@ -140,22 +136,27 @@ fun ChatMessageItem(message: ChatMessage) {
                                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
                         SelectionContainer {
-//                                if (isModel) {
-//                                        MarkdownText(
-//                                                markdown = message.content,
-//                                                color = textColor,
-//                                                style =
-//                                                        MaterialTheme.typography.bodyLarge.copy(
-//                                                                color = textColor
-//                                                        )
-//                                        )
-//                                } else {
-//                                        Text(
-//                                                text = message.content,
-//                                                color = textColor,
-//                                                style = MaterialTheme.typography.bodyLarge
-//                                        )
-//                                }
+                                //                                if (isModel) {
+                                //                                        MarkdownText(
+                                //                                                markdown =
+                                // message.content,
+                                //                                                color = textColor,
+                                //                                                style =
+                                //
+                                // MaterialTheme.typography.bodyLarge.copy(
+                                //
+                                // color = textColor
+                                //                                                        )
+                                //                                        )
+                                //                                } else {
+                                //                                        Text(
+                                //                                                text =
+                                // message.content,
+                                //                                                color = textColor,
+                                //                                                style =
+                                // MaterialTheme.typography.bodyLarge
+                                //                                        )
+                                //                                }
                                 Text(
                                         text = message.content,
                                         color = textColor,
