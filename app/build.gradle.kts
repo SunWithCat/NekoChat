@@ -102,5 +102,5 @@ dependencies {
 
     implementation("org.jetbrains.kotlin:kotlin-reflect:2.0.21") // 反射库
 
-    implementation("com.github.jeziellago:compose-markdown:0.3.6")
+//    implementation("com.github.jeziellago:compose-markdown:0.3.6")
 }

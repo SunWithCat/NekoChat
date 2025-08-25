@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sunwithcat.nekochat.data.model.Author
 import com.sunwithcat.nekochat.data.model.ChatMessage
-import dev.jeziellago.compose.markdowntext.MarkdownText
+//import dev.jeziellago.compose.markdowntext.MarkdownText
 
 @Composable
 fun ChatScreen(viewModel: ChatViewModel = androidx.lifecycle.viewmodel.compose.viewModel()) {
@@ -57,16 +57,35 @@ fun ChatScreen(viewModel: ChatViewModel = androidx.lifecycle.viewmodel.compose.v
                 bottomBar = {} // 移除 bottomBar 的内容
         ) { paddingValues ->
                 Column(modifier = Modifier.fillMaxSize().padding(paddingValues).imePadding()) {
-                        // 聊天消息列表
-                        LazyColumn(
-                                modifier = Modifier.weight(1f).padding(horizontal = 16.dp),
-                                reverseLayout = true,
-                                state = lazyListState // 将滚动状态传递给 LazyColumn
-                        ) {
-                                items(
-                                        items = uiState.messages.reversed(),
-                                        key = { message -> message.id }
-                                ) { message -> ChatMessageItem(message = message) }
+                        Box(modifier = Modifier.weight(1f)) {
+                                // 空状态提示
+                                if (uiState.messages.isEmpty()) {
+                                        Box(
+                                                modifier = Modifier.fillMaxSize(),
+                                                contentAlignment = Alignment.Center
+                                        ) {
+                                                Text(
+                                                        text = "快来和本喵对话吧~\uD83D\uDC3E(ฅ>ω<*ฅ)",
+                                                        style = MaterialTheme.typography.titleLarge,
+                                                        color =
+                                                                MaterialTheme.colorScheme
+                                                                        .onSurfaceVariant
+                                                )
+                                        }
+                                } // 聊天消息列表
+                                else
+                                        LazyColumn(
+                                                modifier =
+                                                        Modifier.fillMaxSize()
+                                                                .padding(horizontal = 16.dp),
+                                                reverseLayout = true,
+                                                state = lazyListState // 将滚动状态传递给 LazyColumn
+                                        ) {
+                                                items(
+                                                        items = uiState.messages.reversed(),
+                                                        key = { message -> message.id }
+                                                ) { message -> ChatMessageItem(message = message) }
+                                        }
                         }
 
                         // 输入框和底部信息
@@ -121,22 +140,27 @@ fun ChatMessageItem(message: ChatMessage) {
                                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
                         SelectionContainer {
-                                if (isModel) {
-                                        MarkdownText(
-                                                markdown = message.content,
-                                                color = textColor,
-                                                style = MaterialTheme.typography.bodyLarge.copy(
-                                                        color = textColor
-                                                )
-                                        )
-
-                                } else {
-                                        Text(
-                                                text = message.content,
-                                                color = textColor,
-                                                style = MaterialTheme.typography.bodyLarge
-                                        )
-                                }
+//                                if (isModel) {
+//                                        MarkdownText(
+//                                                markdown = message.content,
+//                                                color = textColor,
+//                                                style =
+//                                                        MaterialTheme.typography.bodyLarge.copy(
+//                                                                color = textColor
+//                                                        )
+//                                        )
+//                                } else {
+//                                        Text(
+//                                                text = message.content,
+//                                                color = textColor,
+//                                                style = MaterialTheme.typography.bodyLarge
+//                                        )
+//                                }
+                                Text(
+                                        text = message.content,
+                                        color = textColor,
+                                        style = MaterialTheme.typography.bodyLarge
+                                )
                         }
                 }
         }
