@@ -5,82 +5,73 @@ import androidx.lifecycle.viewModelScope
 import com.sunwithcat.nekochat.data.model.Author
 import com.sunwithcat.nekochat.data.model.ChatMessage
 import com.sunwithcat.nekochat.data.repository.ChatRepository
-import kotlinx.coroutines.Dispatchers
+import java.util.UUID
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
-data class ChatUiState(
-        val messages: List<ChatMessage> = emptyList(), // 聊天消息列表
-        val isModelProcessing: Boolean = false // AI模型是否处理中
-)
+data class ChatUiState(val isModelProcessing: Boolean = false)
 
-class ChatViewModel : ViewModel() {
-    // 实例化Repository
-    private val chatRepository = ChatRepository()
+class ChatViewModel(private val chatRepository: ChatRepository) : ViewModel() {
 
-    // 创建一个可变的StateFlow来持有UI状态
-    private val _uiState = MutableStateFlow(ChatUiState())
-    // 不可变的StateFlow，只可观察
-    val uiState = _uiState.asStateFlow()
+    private val _isModelProcessing = MutableStateFlow(false)
 
-    // 发送消息的方法
+    private val _chatHistory: StateFlow<List<ChatMessage>> =
+            chatRepository
+                    .getChatHistory()
+                    // 将 Flow 转换为 StateFlow，可以在 ViewModel 的生命周期内被安全地观察
+                    .stateIn(
+                            scope = viewModelScope,
+                            started = SharingStarted.WhileSubscribed(5000), // 5秒后如果没有观察者就停止
+                            initialValue = emptyList()
+                    )
+
+    // 将两个 Flow 合并成最终的 UI State Flow
+    val uiState: StateFlow<ChatUiState> =
+            combine(_isModelProcessing, _chatHistory) { isProcessing, _ ->
+                        ChatUiState(isModelProcessing = isProcessing)
+                    }
+                    .stateIn(
+                            scope = viewModelScope,
+                            started = SharingStarted.WhileSubscribed(5000),
+                            initialValue = ChatUiState()
+                    )
+
+    // 将消息列表单独暴露给 UI
+    val messages: StateFlow<List<ChatMessage>> =
+            combine(_chatHistory, _isModelProcessing) { history, isProcessing ->
+                        if (isProcessing) {
+                            history +
+                                    ChatMessage(
+                                            id = UUID.randomUUID().toString(),
+                                            content = "...",
+                                            author = Author.MODEL,
+                                            isProcessing = true
+                                    )
+                        } else {
+                            history
+                        }
+                    }
+                    .stateIn(
+                            scope = viewModelScope,
+                            started = SharingStarted.WhileSubscribed(5000),
+                            initialValue = emptyList()
+                    )
+
+    // 简化的 sendMessage 方法
     fun sendMessage(userInput: String) {
-        if (_uiState.value.isModelProcessing || userInput.isBlank()) {
+        if (_isModelProcessing.value || userInput.isBlank()) {
             return
         }
 
-        // 将用户的消息添加到UI状态中
-        _uiState.update { currentState ->
-            val userMessage = ChatMessage(content = userInput, author = Author.USER)
-            currentState.copy(messages = currentState.messages + userMessage)
-        }
-
-        // 更新状态为处理中
-        _uiState.update { currentState ->
-            val loadingMessage =
-                    ChatMessage(content = "...", author = Author.MODEL, isProcessing = true)
-            currentState.copy(
-                    isModelProcessing = true,
-                    messages = currentState.messages + loadingMessage
-            )
-        }
-
-        // 网络请求
         viewModelScope.launch {
-            val historyToSend = _uiState.value.messages
-                .filter { !it.isProcessing } // 过滤掉 ...
-            // 调用方法获取结果
-            val result = chatRepository.sendMessage(historyToSend)
-
-            // 更新UI状态
-            withContext(Dispatchers.Main) {
-                result
-                        .onSuccess { modelResponse ->
-                            _uiState.update { currentState ->
-                                val newMessages =
-                                        currentState.messages.dropLast(1) +
-                                                ChatMessage(
-                                                        content = modelResponse,
-                                                        author = Author.MODEL
-                                                )
-                                currentState.copy(messages = newMessages, isModelProcessing = false)
-                            }
-                        }
-                        .onFailure { error ->
-                            _uiState.update { currentState ->
-                                val newMessages =
-                                        currentState.messages.dropLast(1) +
-                                                ChatMessage(
-                                                        content = "Error: ${error.message}",
-                                                        author = Author.MODEL
-                                                )
-                                currentState.copy(messages = newMessages, isModelProcessing = false)
-                            }
-                        }
-            }
+            _isModelProcessing.value = true
+            // 只需调用 repository 的方法，UI 会通过 Flow 自动更新
+            chatRepository.sendMessage(userInput, _chatHistory.value)
+            _isModelProcessing.value = false
         }
     }
 }

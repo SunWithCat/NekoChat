@@ -6,7 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState // 导入 rememberLazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -18,17 +18,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sunwithcat.nekochat.data.model.Author
 import com.sunwithcat.nekochat.data.model.ChatMessage
 
 // import dev.jeziellago.compose.markdowntext.MarkdownText
 
 @Composable
-fun ChatScreen(viewModel: ChatViewModel = androidx.lifecycle.viewmodel.compose.viewModel()) {
+fun ChatScreen() {
+        val context = LocalContext.current
+        val factory = ChatViewModelFactory(context)
+        val viewModel: ChatViewModel = viewModel(factory = factory)
+
         // 收集状态，状态改变时UI自动重建
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+        val messages by viewModel.messages.collectAsStateWithLifecycle()
 
         // 用于保存输入框内容的本地状态
         var userInput by remember { mutableStateOf("") }
@@ -37,9 +45,11 @@ fun ChatScreen(viewModel: ChatViewModel = androidx.lifecycle.viewmodel.compose.v
         val lazyListState = rememberLazyListState()
 
         // 当消息列表更新时，滚动到最新消息
-        LaunchedEffect(uiState.messages.size) {
-                if (uiState.messages.isNotEmpty()) {
-                        lazyListState.animateScrollToItem(0) // 因为 reverseLayout = true，最新消息在索引 0
+        LaunchedEffect(messages.size) {
+                if (messages.isNotEmpty()) {
+                        lazyListState.animateScrollToItem(
+                                messages.lastIndex
+                        ) // 因为 reverseLayout = true，最新消息在索引 0
                 }
         }
 
@@ -55,12 +65,12 @@ fun ChatScreen(viewModel: ChatViewModel = androidx.lifecycle.viewmodel.compose.v
                                         )
                         )
                 },
-                bottomBar = {} // 移除 bottomBar 的内容
+                bottomBar = {}
         ) { paddingValues ->
                 Column(modifier = Modifier.fillMaxSize().padding(paddingValues).imePadding()) {
                         Box(modifier = Modifier.weight(1f)) {
                                 // 空状态提示
-                                if (uiState.messages.isEmpty()) {
+                                if (messages.isEmpty()) {
                                         Box(
                                                 modifier = Modifier.fillMaxSize(),
                                                 contentAlignment = Alignment.Center
@@ -79,11 +89,11 @@ fun ChatScreen(viewModel: ChatViewModel = androidx.lifecycle.viewmodel.compose.v
                                                 modifier =
                                                         Modifier.fillMaxSize()
                                                                 .padding(horizontal = 16.dp),
-                                                reverseLayout = true,
+                                                reverseLayout = false,
                                                 state = lazyListState // 将滚动状态传递给 LazyColumn
                                         ) {
                                                 items(
-                                                        items = uiState.messages.reversed(),
+                                                        items = messages,
                                                         key = { message -> message.id }
                                                 ) { message -> ChatMessageItem(message = message) }
                                         }
@@ -136,27 +146,6 @@ fun ChatMessageItem(message: ChatMessage) {
                                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
                         SelectionContainer {
-                                //                                if (isModel) {
-                                //                                        MarkdownText(
-                                //                                                markdown =
-                                // message.content,
-                                //                                                color = textColor,
-                                //                                                style =
-                                //
-                                // MaterialTheme.typography.bodyLarge.copy(
-                                //
-                                // color = textColor
-                                //                                                        )
-                                //                                        )
-                                //                                } else {
-                                //                                        Text(
-                                //                                                text =
-                                // message.content,
-                                //                                                color = textColor,
-                                //                                                style =
-                                // MaterialTheme.typography.bodyLarge
-                                //                                        )
-                                //                                }
                                 Text(
                                         text = message.content,
                                         color = textColor,
@@ -177,7 +166,7 @@ fun MessageInput(
         Row(
                 modifier =
                         Modifier.fillMaxWidth()
-                                .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
+                                .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 2.dp),
                 verticalAlignment = Alignment.CenterVertically
         ) {
                 TextField(
