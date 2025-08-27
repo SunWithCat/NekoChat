@@ -4,6 +4,7 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
     // API URL
@@ -14,7 +15,12 @@ object RetrofitClient {
             HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY }
 
     // 创建OkHttp客户端
-    private val httpClient = OkHttpClient.Builder().addInterceptor(loggingInterceptor).build()
+    private val httpClient = OkHttpClient.Builder()
+        .addInterceptor(loggingInterceptor)
+        .connectTimeout(30, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .writeTimeout(30, TimeUnit.SECONDS)
+        .build()
 
     // 懒加载创建Retrofit实例
     private val retrofit: Retrofit by lazy {

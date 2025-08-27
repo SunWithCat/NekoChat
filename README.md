@@ -1,6 +1,7 @@
 # 🐾 NekoChat
 
-基于 Android 的智能聊天应用，与猫娘 AI 助手"小苍"进行有趣对话。
+Ciallo～(∠・ω< )⌒★
+这是一款基于 Android 的智能聊天应用，与猫娘 AI 助手"小苍"进行有趣对话。
 
 ## 📸 预览
 
@@ -12,8 +13,6 @@
 ## ✨ 功能特性
 
 - 与基于 Google Gemini 2.5 Flash 的猫娘实时聊天与可爱互动
-- Jetpack Compose 现代化 UI
-- MVVM 架构，代码清晰易维护
 
 ## 🛠️ 技术栈
 
