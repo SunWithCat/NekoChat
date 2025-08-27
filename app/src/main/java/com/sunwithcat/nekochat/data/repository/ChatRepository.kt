@@ -52,8 +52,8 @@ class ChatRepository(private val chatMessageDao: ChatMessageDao) {
             val currentUserMessage = ChatMessage(content = userInput, author = Author.USER)
             historyForApi = historyForApi + currentUserMessage
 
-            // 只取最近的 10 条消息作为上下文，防止请求体过长
-            historyForApi = historyForApi.takeLast(10)
+            // 只取最近的 20 条消息作为上下文，防止请求体过长
+            historyForApi = historyForApi.takeLast(20)
 
             val contents =
                     historyForApi.map { message ->
@@ -90,5 +90,9 @@ class ChatRepository(private val chatMessageDao: ChatMessageDao) {
                     ChatMessageEntity(content = "Error: ${e.message}", author = Author.MODEL.name)
             chatMessageDao.insertMessage(errorMessageEntity)
         }
+    }
+
+    suspend fun clearChatHistory() {
+        chatMessageDao.clearAllMessages()
     }
 }

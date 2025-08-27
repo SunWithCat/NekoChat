@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -41,6 +42,9 @@ fun ChatScreen() {
         // 用于保存输入框内容的本地状态
         var userInput by remember { mutableStateOf("") }
 
+        // 是否显示删除弹窗
+        var showDeleteDialog by remember { mutableStateOf(false) }
+
         // 获取 LazyColumn 的滚动状态
         val lazyListState = rememberLazyListState()
 
@@ -49,24 +53,61 @@ fun ChatScreen() {
                 if (messages.isNotEmpty()) {
                         lazyListState.animateScrollToItem(
                                 messages.lastIndex
-                        ) // 因为 reverseLayout = true，最新消息在索引 0
+                        )
                 }
         }
 
         Scaffold(
                 topBar = {
-                        TopAppBar(
+                        CenterAlignedTopAppBar(
                                 title = { Text("Neko Chat") },
                                 colors =
                                         TopAppBarDefaults.topAppBarColors(
                                                 containerColor = MaterialTheme.colorScheme.primary,
                                                 titleContentColor =
                                                         MaterialTheme.colorScheme.onPrimary
-                                        )
+                                        ),
+                                actions = {
+                                        IconButton(
+                                                onClick = { showDeleteDialog = true },
+                                                enabled = messages.isNotEmpty()
+                                        ) {
+                                                Icon(
+                                                        imageVector = Icons.Default.Delete,
+                                                        contentDescription = "清空聊天记录",
+                                                        tint = MaterialTheme.colorScheme.onPrimary
+                                                )
+                                        }
+                                }
+
                         )
                 },
                 bottomBar = {}
         ) { paddingValues ->
+                if (showDeleteDialog) {
+                        AlertDialog(
+                                onDismissRequest = {showDeleteDialog = false},
+                                title = { Text("喵生震惊！")},
+                                text = { Text("喂！不准删，笨蛋！删掉了...咬你哦！\n(｀Δ´)") },
+                                confirmButton = {
+                                        TextButton(
+                                                onClick = {
+                                                        viewModel.clearChatHistory()
+                                                        showDeleteDialog = false
+                                                }
+                                        ) {
+                                                Text("确定", color = MaterialTheme.colorScheme.error)
+                                        }
+                                },
+                                dismissButton = {
+                                        TextButton(
+                                                onClick = {showDeleteDialog = false}
+                                        ) {
+                                                Text("取消")
+                                        }
+                                }
+                        )
+                }
                 Column(modifier = Modifier.fillMaxSize().padding(paddingValues).imePadding()) {
                         Box(modifier = Modifier.weight(1f)) {
                                 // 空状态提示
@@ -174,7 +215,7 @@ fun MessageInput(
                         onValueChange = onValueChange,
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(24.dp),
-                        placeholder = @Composable { Text("Type a message...") },
+                        placeholder = @Composable { Text("与猫娘小苍进行对话") },
                         colors =
                                 TextFieldDefaults.colors(
                                         focusedIndicatorColor = Color.Transparent,

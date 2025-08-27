@@ -74,4 +74,8 @@ class ChatViewModel(private val chatRepository: ChatRepository) : ViewModel() {
             _isModelProcessing.value = false
         }
     }
+
+    fun clearChatHistory() {
+        viewModelScope.launch { chatRepository.clearChatHistory() }
+    }
 }
