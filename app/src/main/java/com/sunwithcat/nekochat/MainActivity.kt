@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import com.sunwithcat.nekochat.ui.chat.ChatScreen
+import com.sunwithcat.nekochat.ui.AppNavigation
 import com.sunwithcat.nekochat.ui.theme.NekoChatTheme
 
 class MainActivity : ComponentActivity() {
@@ -21,7 +21,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    ChatScreen()
+                    AppNavigation()
                 }
             }
         }

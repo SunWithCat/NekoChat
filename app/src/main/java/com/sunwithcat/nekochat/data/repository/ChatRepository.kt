@@ -2,7 +2,7 @@ package com.sunwithcat.nekochat.data.repository
 
 import com.sunwithcat.nekochat.BuildConfig
 import com.sunwithcat.nekochat.data.local.ChatMessageDao
-import com.sunwithcat.nekochat.data.model.AIConfig
+import com.sunwithcat.nekochat.data.local.PromptManager
 import com.sunwithcat.nekochat.data.model.Author
 import com.sunwithcat.nekochat.data.model.ChatMessage
 import com.sunwithcat.nekochat.data.model.ChatMessageEntity
@@ -13,8 +13,9 @@ import com.sunwithcat.nekochat.data.remote.RetrofitClient
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-class ChatRepository(private val chatMessageDao: ChatMessageDao) {
-
+class ChatRepository(private val chatMessageDao: ChatMessageDao,
+    private val promptManager: PromptManager
+    ) {
     fun getChatHistory(): Flow<List<ChatMessage>> {
         return chatMessageDao.getAllMessages().map { entities ->
             entities.map { entity ->
@@ -29,7 +30,7 @@ class ChatRepository(private val chatMessageDao: ChatMessageDao) {
     }
 
     suspend fun sendMessage(userInput: String, chatHistory: List<ChatMessage>) {
-        // 1. 立刻将用户的消息存入数据库，让 UI 立即显示
+        // 立刻将用户的消息存入数据库，让 UI 立即显示
         val userMessageEntity = ChatMessageEntity(content = userInput, author = Author.USER.name)
         chatMessageDao.insertMessage(userMessageEntity)
 
@@ -44,7 +45,7 @@ class ChatRepository(private val chatMessageDao: ChatMessageDao) {
             // 如果过滤后历史记录为空，说明是新对话，就在最前面加上系统设定
             if (historyForApi.isEmpty()) {
                 val systemPromptMessage =
-                        ChatMessage(content = AIConfig.DEFAULT_SYSTEM_PROMPT, author = Author.MODEL)
+                        ChatMessage(content = promptManager.getPrompt(), author = Author.MODEL)
                 historyForApi = listOf(systemPromptMessage)
             }
 
@@ -52,8 +53,8 @@ class ChatRepository(private val chatMessageDao: ChatMessageDao) {
             val currentUserMessage = ChatMessage(content = userInput, author = Author.USER)
             historyForApi = historyForApi + currentUserMessage
 
-            // 只取最近的 20 条消息作为上下文，防止请求体过长
-            historyForApi = historyForApi.takeLast(20)
+            // 只取最近的 30 条消息作为上下文，防止请求体过长
+            historyForApi = historyForApi.takeLast(30)
 
             val contents =
                     historyForApi.map { message ->

@@ -13,6 +13,7 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,7 +30,7 @@ import com.sunwithcat.nekochat.data.model.ChatMessage
 // import dev.jeziellago.compose.markdowntext.MarkdownText
 
 @Composable
-fun ChatScreen() {
+fun ChatScreen(onNavigateToSettings: () -> Unit) {
         val context = LocalContext.current
         val factory = ChatViewModelFactory(context)
         val viewModel: ChatViewModel = viewModel(factory = factory)
@@ -68,6 +69,13 @@ fun ChatScreen() {
                                                         MaterialTheme.colorScheme.onPrimary
                                         ),
                                 actions = {
+                                        IconButton(onClick = onNavigateToSettings) {
+                                                Icon(
+                                                        imageVector = Icons.Default.Settings,
+                                                        contentDescription = "设置",
+                                                        tint = MaterialTheme.colorScheme.onPrimary
+                                                )
+                                        }
                                         IconButton(
                                                 onClick = { showDeleteDialog = true },
                                                 enabled = messages.isNotEmpty()
