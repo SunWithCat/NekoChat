@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -15,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -39,6 +42,38 @@ fun SettingsScreen(
 
     var promptText by remember { mutableStateOf(viewModel.getCurrentPrompt()) }
 
+    var showRestoreDialog by remember { mutableStateOf(false) }
+
+    if (showRestoreDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showRestoreDialog = false
+            },
+            title = { Text("等等喵！")},
+            text = {Text("确定要清除掉我们之间✨独特的约定✨，变回最初的设定喵？")},
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        promptText = viewModel.getDefaultPrompt()
+                        showRestoreDialog = false
+                        Toast.makeText(context, "恢复成功！喵~", Toast.LENGTH_SHORT).show()
+                    }
+                ) {
+                    Text("确定啦")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showRestoreDialog = false
+                    }
+                ) {
+                    Text("我再想想")
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -59,6 +94,14 @@ fun SettingsScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = {
+                        showRestoreDialog = true
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.Restore,
+                            contentDescription = "恢复"
+                        )
+                    }
                     IconButton(onClick = {
                         viewModel.savePrompt(promptText)
                         Toast.makeText(context, "保存成功！喵~", Toast.LENGTH_SHORT).show()

@@ -13,8 +13,13 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.ChatBubbleOutline
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.*
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,8 +31,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sunwithcat.nekochat.data.model.Author
 import com.sunwithcat.nekochat.data.model.ChatMessage
+import kotlinx.coroutines.launch
 
-// import dev.jeziellago.compose.markdowntext.MarkdownText
 
 @Composable
 fun ChatScreen(onNavigateToSettings: () -> Unit) {
@@ -49,6 +54,9 @@ fun ChatScreen(onNavigateToSettings: () -> Unit) {
         // 获取 LazyColumn 的滚动状态
         val lazyListState = rememberLazyListState()
 
+        val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+        val scope = rememberCoroutineScope()
+
         // 当消息列表更新时，滚动到最新消息
         LaunchedEffect(messages.size) {
                 if (messages.isNotEmpty()) {
@@ -58,115 +66,217 @@ fun ChatScreen(onNavigateToSettings: () -> Unit) {
                 }
         }
 
-        Scaffold(
-                topBar = {
-                        CenterAlignedTopAppBar(
-                                title = { Text("Neko Chat") },
-                                colors =
-                                        TopAppBarDefaults.topAppBarColors(
-                                                containerColor = MaterialTheme.colorScheme.primary,
-                                                titleContentColor =
-                                                        MaterialTheme.colorScheme.onPrimary
-                                        ),
-                                actions = {
-                                        IconButton(onClick = onNavigateToSettings) {
-                                                Icon(
-                                                        imageVector = Icons.Default.Settings,
-                                                        contentDescription = "设置",
-                                                        tint = MaterialTheme.colorScheme.onPrimary
-                                                )
-                                        }
-                                        IconButton(
-                                                onClick = { showDeleteDialog = true },
-                                                enabled = messages.isNotEmpty()
-                                        ) {
-                                                Icon(
-                                                        imageVector = Icons.Default.Delete,
-                                                        contentDescription = "清空聊天记录",
-                                                        tint = MaterialTheme.colorScheme.onPrimary
-                                                )
-                                        }
-                                }
-
-                        )
-                },
-                bottomBar = {}
-        ) { paddingValues ->
-                if (showDeleteDialog) {
-                        AlertDialog(
-                                onDismissRequest = {showDeleteDialog = false},
-                                title = { Text("喵生震惊！")},
-                                text = { Text("喂！不准删，笨蛋！删掉了...咬你哦！\n(｀Δ´)") },
-                                confirmButton = {
-                                        TextButton(
-                                                onClick = {
-                                                        viewModel.clearChatHistory()
-                                                        showDeleteDialog = false
-                                                }
-                                        ) {
-                                                Text("确定", color = MaterialTheme.colorScheme.error)
-                                        }
-                                },
-                                dismissButton = {
-                                        TextButton(
-                                                onClick = {showDeleteDialog = false}
-                                        ) {
-                                                Text("取消")
-                                        }
-                                }
-                        )
-                }
-                Column(modifier = Modifier.fillMaxSize().padding(paddingValues).imePadding()) {
-                        Box(modifier = Modifier.weight(1f)) {
-                                // 空状态提示
-                                if (messages.isEmpty()) {
-                                        Box(
-                                                modifier = Modifier.fillMaxSize(),
-                                                contentAlignment = Alignment.Center
+        ModalNavigationDrawer(
+                drawerState = drawerState,
+                drawerContent = {
+                        ModalDrawerSheet(
+                                drawerContainerColor = MaterialTheme.colorScheme.surfaceContainerLow.copy(0.98f)
+                        ) {
+                                Column(modifier = Modifier.statusBarsPadding()) {
+                                        Column(
+                                                modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+                                                        .padding(vertical = 24.dp),
+                                                horizontalAlignment = Alignment.CenterHorizontally
                                         ) {
                                                 Text(
-                                                        text = "快来和本喵对话吧~\uD83D\uDC3E(ฅ>ω<*ฅ)",
+                                                        text = "Neko Chat",
                                                         style = MaterialTheme.typography.titleLarge,
-                                                        color =
-                                                                MaterialTheme.colorScheme
-                                                                        .onSurfaceVariant
+                                                        color = MaterialTheme.colorScheme.primary
+                                                )
+                                                Text(
+                                                        text = "你的专属猫娘助手",
+                                                        style = MaterialTheme.typography.bodySmall
                                                 )
                                         }
-                                } // 聊天消息列表
-                                else
-                                        LazyColumn(
-                                                modifier =
-                                                        Modifier.fillMaxSize()
-                                                                .padding(horizontal = 16.dp),
-                                                reverseLayout = false,
-                                                state = lazyListState // 将滚动状态传递给 LazyColumn
-                                        ) {
-                                                items(
-                                                        items = messages,
-                                                        key = { message -> message.id }
-                                                ) { message -> ChatMessageItem(message = message) }
-                                        }
-                        }
+                                }
+                                Modifier.padding(horizontal = 16.dp)
+                                HorizontalDivider(modifier = Modifier.padding(8.dp))
 
-                        // 输入框和底部信息
-                        Column(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                                MessageInput(
-                                        value = userInput,
-                                        onValueChange = { userInput = it },
-                                        onSendClick = {
-                                                viewModel.sendMessage(userInput)
-                                                userInput = "" // 发送后清空输入框
+                                var selectedItem by remember { mutableStateOf("new_chat") }
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                NavigationDrawerItem(
+                                    icon = {
+                                        Icon(
+                                            Icons.Outlined.ChatBubbleOutline,
+                                            contentDescription = "新对话"
+                                        )
+                                    },
+                                    label = {Text(text = "开始新对话")},
+                                    selected = selectedItem == "new_chat",
+                                    onClick = {
+                                            selectedItem = "new_chat"
+                                    },
+                                    modifier = Modifier.padding(horizontal = 12.dp),
+                                )
+                                NavigationDrawerItem(
+                                        icon = {
+                                                Icon(Icons.Outlined.History, contentDescription = "历史记录")
                                         },
-                                        isSendingEnabled = !uiState.isModelProcessing // 模型处理时禁用发送按钮
+                                        label = { Text(text = "历史记录")},
+                                        selected = selectedItem == "history",
+                                        onClick = {
+                                                selectedItem = "history"
+                                        },
+                                        modifier = Modifier.padding(horizontal = 12.dp),
                                 )
-                                Text(
-                                        text = "Based on Google Gemini-2.5-Flash",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        modifier = Modifier.padding(vertical = 6.dp)
+                                Spacer(modifier = Modifier.weight(1f))
+                                HorizontalDivider(
+                                        modifier = Modifier.padding(horizontal = 8.dp),
                                 )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                NavigationDrawerItem(
+                                        icon = {
+                                                Icon(
+                                                        Icons.Outlined.Info,
+                                                        contentDescription = "关于"
+                                                )
+                                        },
+                                        label = {
+                                                Text(
+                                                        text = "关于 NekoChat"
+                                                )
+                                        },
+                                        selected = selectedItem == "about",
+                                        onClick = {
+                                                selectedItem = "about"
+                                        },
+                                        modifier = Modifier.padding(horizontal = 12.dp)
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                        }
+                }
+        ) {
+                Scaffold(
+                        topBar = {
+                                CenterAlignedTopAppBar(
+                                        title = { Text("Neko Chat") },
+                                        colors =
+                                                TopAppBarDefaults.topAppBarColors(
+                                                        containerColor = MaterialTheme.colorScheme.primary,
+                                                        titleContentColor =
+                                                                MaterialTheme.colorScheme.onPrimary,
+                                                        navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                                                ),
+                                        navigationIcon = {
+                                                IconButton(
+                                                        onClick = {
+                                                                scope.launch {
+                                                                        drawerState.apply {
+                                                                                if(isClosed) open() else close()
+                                                                        }
+                                                                }
+                                                        }
+                                                ) {
+                                                        Icon(
+                                                                imageVector = Icons.Default.Menu,
+                                                                contentDescription = "菜单"
+                                                        )
+                                                }
+                                        },
+                                        actions = {
+                                                IconButton(onClick = onNavigateToSettings) {
+                                                        Icon(
+                                                                imageVector = Icons.Default.Settings,
+                                                                contentDescription = "设置",
+                                                                tint = MaterialTheme.colorScheme.onPrimary
+                                                        )
+                                                }
+                                                IconButton(
+                                                        onClick = { showDeleteDialog = true },
+                                                        enabled = messages.isNotEmpty()
+                                                ) {
+                                                        Icon(
+                                                                imageVector = Icons.Default.Delete,
+                                                                contentDescription = "清空聊天记录",
+                                                                tint = MaterialTheme.colorScheme.onPrimary
+                                                        )
+                                                }
+                                        }
+
+                                )
+                        },
+                        bottomBar = {}
+                ) { paddingValues ->
+                        if (showDeleteDialog) {
+                                AlertDialog(
+                                        onDismissRequest = {showDeleteDialog = false},
+                                        title = { Text("喵生震惊！")},
+                                        text = { Text("喂！不准删，笨蛋！删掉了...咬你哦！\n(｀Δ´)") },
+                                        confirmButton = {
+                                                TextButton(
+                                                        onClick = {
+                                                                viewModel.clearChatHistory()
+                                                                showDeleteDialog = false
+                                                        }
+                                                ) {
+                                                        Text("确定", color = MaterialTheme.colorScheme.error)
+                                                }
+                                        },
+                                        dismissButton = {
+                                                TextButton(
+                                                        onClick = {showDeleteDialog = false}
+                                                ) {
+                                                        Text("取消")
+                                                }
+                                        }
+                                )
+                        }
+                        Column(modifier = Modifier.fillMaxSize().padding(paddingValues).imePadding()) {
+                                Box(modifier = Modifier.weight(1f)) {
+                                        // 空状态提示
+                                        if (messages.isEmpty()) {
+                                                Box(
+                                                        modifier = Modifier.fillMaxSize(),
+                                                        contentAlignment = Alignment.Center
+                                                ) {
+                                                        Text(
+                                                                text = "快来和本喵对话吧~\uD83D\uDC3E(ฅ>ω<*ฅ)",
+                                                                style = MaterialTheme.typography.titleLarge,
+                                                                color =
+                                                                        MaterialTheme.colorScheme
+                                                                                .onSurfaceVariant
+                                                        )
+                                                }
+                                        } // 聊天消息列表
+                                        else
+                                                LazyColumn(
+                                                        modifier =
+                                                                Modifier.fillMaxSize()
+                                                                        .padding(horizontal = 16.dp),
+                                                        reverseLayout = false,
+                                                        state = lazyListState // 将滚动状态传递给 LazyColumn
+                                                ) {
+                                                        items(
+                                                                items = messages,
+                                                                key = { message -> message.id }
+                                                        ) { message -> ChatMessageItem(message = message) }
+                                                }
+                                }
+
+                                // 输入框和底部信息
+                                Column(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                        MessageInput(
+                                                value = userInput,
+                                                onValueChange = { userInput = it },
+                                                onSendClick = {
+                                                        viewModel.sendMessage(userInput)
+                                                        userInput = "" // 发送后清空输入框
+                                                },
+                                                isSendingEnabled = !uiState.isModelProcessing // 模型处理时禁用发送按钮
+                                        )
+                                        Text(
+                                                text = "Based on Google Gemini-2.5-Flash",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                modifier = Modifier.padding(vertical = 6.dp)
+                                        )
+                                }
                         }
                 }
         }
