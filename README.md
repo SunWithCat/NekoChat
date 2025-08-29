@@ -1,35 +1,65 @@
 # 🐾 NekoChat
 
-Ciallo～(∠・ω< )⌒★
-这是一款基于 Android 的智能聊天应用，与猫娘 AI 助手"小苍"进行有趣对话。
-
-## 📸 预览
-
-<div align="center" style="display: flex; gap: 20px; flex-wrap: wrap;">
-  <img src="preview1.jpg" alt="预览图1" style="width: 20%; max-width: 200px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-  <img src="preview2.jpg" alt="预览图2" style="width: 20%; max-width: 200px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-</div>
+Ciallo～(∠・ω< )⌒★  
+这是一款基于 Android 的智能聊天应用，与可爱的猫娘 AI 助手"小苍"进行有趣对话，体验温馨的虚拟陪伴。
 
 ## ✨ 功能特性
 
-- 与基于 Google Gemini 2.5 Flash 的猫娘实时聊天与可爱互动
+- 🐱 **智能猫娘对话** - 基于 Google Gemini 2.5 Flash 的个性化 AI 助手
+- 💬 **实时聊天互动** - 流畅的对话体验，支持多轮上下文理解
+- 💾 **本地消息存储** - 使用 Room 数据库持久化保存聊天记录
+- ⚙️ **个性化设置** - 可自定义 AI 角色性格和对话风格
+- 🔒 **隐私保护** - 所有对话数据仅存储在本地设备
+
+## 📸 应用预览
+
+<div align="center" style="display: flex; gap: 20px; flex-wrap: wrap;">
+  <img src="preview1.jpg" alt="聊天界面预览" style="width: 30%; max-width: 300px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+  <img src="preview2.jpg" alt="菜单界面预览" style="width: 30%; max-width: 300px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+  <img src="preview3.jpg" alt="设置界面预览" style="width: 30%; max-width: 300px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+</div>
+
+## 🚀 快速开始
+
+### 安装步骤
+
+1. **克隆项目**
+   ```bash
+   git clone https://github.com/SunWithCat/NekoChat.git
+   cd NekoChat
+   ```
+
+2. **配置 API Key**
+   
+   在项目根目录创建 `local.properties` 文件，添加你的 Gemini API Key：
+   ```properties
+   GEMINI_API_KEY=your_actual_api_key_here
+   ```
+
+3. **构建运行**
+   - 使用 Android Studio 打开项目
+   - 点击运行按钮或使用快捷键运行应用
+
+### 获取 Gemini API Key
+
+1. 访问 [Google AI Studio](https://aistudio.google.com/app/apikey)
+2. 登录你的 Google 账号
+3. 创建新的 API Key
+4. 复制 Key 并配置到项目中
 
 ## 🛠️ 技术栈
 
-- **Kotlin** - 主要编程语言
-- **Jetpack Compose** - 声明式 UI 框架
-- **Retrofit + OkHttp** - 网络请求
-- **Coroutines** - 异步处理
-- **MVVM** - 架构模式
-- **Room** - 本地数据存储
+- **语言**: Kotlin
+- **UI框架**: Jetpack Compose
+- **架构**: MVVM
+- **网络**: Retrofit+ OkHttp
+- **异步**: Coroutines + Flow
+- **数据库**: Room
 
-## ⚙️ 配置使用
+## ⭐ 支持项目
 
-1. 在 `local.properties` 中添加你的 Gemini API Key：
-```
-GEMINI_API_KEY=your_api_key_here
-```
+如果这个项目对你有帮助，请给它一个 ⭐️ ！你的支持是我持续更新的最大动力。
 
-2. 构建并运行应用
+---
 
-3. 若需修改 AI 角色或对话风格，可在 `AIConfig.kt` 中调整对应内容。
+**感谢使用 NekoChat！希望小苍能给你带来愉快的聊天体验～** 🐾

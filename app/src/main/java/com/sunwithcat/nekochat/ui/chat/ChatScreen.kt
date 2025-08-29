@@ -35,7 +35,8 @@ import kotlinx.coroutines.launch
 
 
 @Composable
-fun ChatScreen(onNavigateToSettings: () -> Unit) {
+fun ChatScreen(onNavigateToSettings: () -> Unit,
+               onNavigateToAbout: () -> Unit) {
         val context = LocalContext.current
         val factory = ChatViewModelFactory(context)
         val viewModel: ChatViewModel = viewModel(factory = factory)
@@ -57,6 +58,8 @@ fun ChatScreen(onNavigateToSettings: () -> Unit) {
         val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
         val scope = rememberCoroutineScope()
 
+        var selectedItem by remember { mutableStateOf("new_chat") }
+
         // 当消息列表更新时，滚动到最新消息
         LaunchedEffect(messages.size) {
                 if (messages.isNotEmpty()) {
@@ -70,7 +73,7 @@ fun ChatScreen(onNavigateToSettings: () -> Unit) {
                 drawerState = drawerState,
                 drawerContent = {
                         ModalDrawerSheet(
-                                drawerContainerColor = MaterialTheme.colorScheme.surfaceContainerLow.copy(0.98f)
+                                drawerContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(0.98f)
                         ) {
                                 Column(modifier = Modifier.statusBarsPadding()) {
                                         Column(
@@ -94,8 +97,6 @@ fun ChatScreen(onNavigateToSettings: () -> Unit) {
                                 Modifier.padding(horizontal = 16.dp)
                                 HorizontalDivider(modifier = Modifier.padding(8.dp))
 
-                                var selectedItem by remember { mutableStateOf("new_chat") }
-
                                 Spacer(modifier = Modifier.height(16.dp))
 
                                 NavigationDrawerItem(
@@ -111,10 +112,15 @@ fun ChatScreen(onNavigateToSettings: () -> Unit) {
                                             selectedItem = "new_chat"
                                     },
                                     modifier = Modifier.padding(horizontal = 12.dp),
+                                        colors = NavigationDrawerItemDefaults.colors(
+                                                unselectedContainerColor = Color.Transparent,
+                                                selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                                        )
                                 )
                                 NavigationDrawerItem(
                                         icon = {
-                                                Icon(Icons.Outlined.History, contentDescription = "历史记录")
+                                                Icon(
+                                                        Icons.Outlined.History, contentDescription = "历史记录")
                                         },
                                         label = { Text(text = "历史记录")},
                                         selected = selectedItem == "history",
@@ -122,6 +128,10 @@ fun ChatScreen(onNavigateToSettings: () -> Unit) {
                                                 selectedItem = "history"
                                         },
                                         modifier = Modifier.padding(horizontal = 12.dp),
+                                        colors = NavigationDrawerItemDefaults.colors(
+                                                unselectedContainerColor = Color.Transparent,
+                                                selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                                        )
                                 )
                                 Spacer(modifier = Modifier.weight(1f))
                                 HorizontalDivider(
@@ -142,7 +152,10 @@ fun ChatScreen(onNavigateToSettings: () -> Unit) {
                                         },
                                         selected = selectedItem == "about",
                                         onClick = {
-                                                selectedItem = "about"
+                                                scope.launch {
+                                                        drawerState.close()
+                                                }
+                                                onNavigateToAbout()
                                         },
                                         modifier = Modifier.padding(horizontal = 12.dp)
                                 )
