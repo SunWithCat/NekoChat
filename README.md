@@ -14,9 +14,9 @@ Ciallo～(∠・ω< )⌒★
 ## 📸 应用预览
 
 <div align="center" style="display: flex; gap: 20px; flex-wrap: wrap;">
-  <img src="preview1.jpg" alt="聊天界面预览" style="width: 30%; max-width: 300px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-  <img src="preview2.jpg" alt="菜单界面预览" style="width: 30%; max-width: 300px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-  <img src="preview3.jpg" alt="设置界面预览" style="width: 30%; max-width: 300px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+  <img src="preview01.jpg" alt="聊天界面预览" style="width: 30%; max-width: 300px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+  <img src="preview02.jpg" alt="菜单界面预览" style="width: 30%; max-width: 300px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+  <img src="preview03.jpg" alt="设置界面预览" style="width: 30%; max-width: 300px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
 </div>
 
 ## 🚀 快速开始
