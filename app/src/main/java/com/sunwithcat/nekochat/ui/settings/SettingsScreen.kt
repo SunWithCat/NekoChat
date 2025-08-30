@@ -30,12 +30,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(
-    onBack: () -> Unit
-) {
+fun SettingsScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val factory = SettingsViewModelFactory(context)
     val viewModel: SettingsViewModel = viewModel(factory = factory)
@@ -46,88 +43,68 @@ fun SettingsScreen(
 
     if (showRestoreDialog) {
         AlertDialog(
-            onDismissRequest = {
-                showRestoreDialog = false
-            },
-            title = { Text("等等喵！")},
-            text = {Text("确定要清除掉我们之间✨独特的约定✨，变回最初的设定喵？")},
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        promptText = viewModel.getDefaultPrompt()
-                        showRestoreDialog = false
-                        Toast.makeText(context, "恢复成功！喵~", Toast.LENGTH_SHORT).show()
-                    }
-                ) {
-                    Text("确定啦")
+                onDismissRequest = { showRestoreDialog = false },
+                title = { Text("等等喵！") },
+                text = { Text("确定要清除掉我们之间✨独特的约定✨，变回最初的设定喵？") },
+                confirmButton = {
+                    TextButton(
+                            onClick = {
+                                promptText = viewModel.getDefaultPrompt()
+                                showRestoreDialog = false
+                                Toast.makeText(context, "恢复成功！喵~", Toast.LENGTH_SHORT).show()
+                            }
+                    ) { Text("确定啦") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showRestoreDialog = false }) { Text("我再想想") }
                 }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        showRestoreDialog = false
-                    }
-                ) {
-                    Text("我再想想")
-                }
-            }
         )
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("角色设定") },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.primary,
-                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
-                ),
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            contentDescription = "返回"
-                            )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = {
-                        showRestoreDialog = true
-                    }) {
-                        Icon(
-                            imageVector = Icons.Default.Restore,
-                            contentDescription = "恢复"
-                        )
-                    }
-                    IconButton(onClick = {
-                        viewModel.savePrompt(promptText)
-                        Toast.makeText(context, "保存成功！喵~", Toast.LENGTH_SHORT).show()
-                        onBack()
-                    }) {
-                        Icon(
-                            imageVector = Icons.Default.Done,
-                            contentDescription = "保存"
-                        )
-                    }
-                }
-            )
-        }
+            topBar = {
+                TopAppBar(
+                        title = { Text("角色设定") },
+                        colors =
+                                TopAppBarDefaults.topAppBarColors(
+                                        titleContentColor = MaterialTheme.colorScheme.primary,
+                                        navigationIconContentColor =
+                                                MaterialTheme.colorScheme.primary,
+                                        actionIconContentColor = MaterialTheme.colorScheme.primary
+                                ),
+                        navigationIcon = {
+                            IconButton(onClick = onBack) {
+                                Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        contentDescription = "返回"
+                                )
+                            }
+                        },
+                        actions = {
+                            IconButton(onClick = { showRestoreDialog = true }) {
+                                Icon(imageVector = Icons.Default.Restore, contentDescription = "恢复")
+                            }
+                            IconButton(
+                                    onClick = {
+                                        viewModel.savePrompt(promptText)
+                                        Toast.makeText(context, "保存成功！喵~", Toast.LENGTH_SHORT)
+                                                .show()
+                                        onBack()
+                                    }
+                            ) { Icon(imageVector = Icons.Default.Done, contentDescription = "保存") }
+                        }
+                )
+            }
     ) { paddingValues ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp)
-                .imePadding()
+                modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp).imePadding()
         ) {
             OutlinedTextField(
-                value = promptText,
-                onValueChange = {promptText = it},
-                modifier = Modifier.fillMaxSize(),
-                label = {Text("在这里编辑你的专属猫娘设定...")}
+                    value = promptText,
+                    onValueChange = { promptText = it },
+                    modifier = Modifier.fillMaxSize(),
+                    label = { Text("在这里编辑你的专属猫娘设定...") }
             )
         }
     }

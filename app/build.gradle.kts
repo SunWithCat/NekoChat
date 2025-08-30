@@ -1,5 +1,5 @@
-import java.util.Properties
-import java.io.FileInputStream
+//import java.util.Properties
+//import java.io.FileInputStream
 
 plugins {
     alias(libs.plugins.android.application)
@@ -22,18 +22,18 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // 读取 local.properties 文件
-        val localProperties = Properties()
-        val localPropertiesFile = rootProject.file("local.properties")
-        if (localPropertiesFile.exists()) {
-            localProperties.load(FileInputStream(localPropertiesFile)) 
-        }
+//        val localProperties = Properties()
+//        val localPropertiesFile = rootProject.file("local.properties")
+//        if (localPropertiesFile.exists()) {
+//            localProperties.load(FileInputStream(localPropertiesFile))
+//        }
 
         // 将API Key添加到BuildConfig中
-        buildConfigField(
-            type = "String",
-            name = "GEMINI_API_KEY",
-            value = "\"${localProperties.getProperty("GEMINI_API_KEY")}\""
-        )
+//        buildConfigField(
+//            type = "String",
+//            name = "GEMINI_API_KEY",
+//            value = "\"${localProperties.getProperty("GEMINI_API_KEY")}\""
+//        )
     }
 
     buildTypes {

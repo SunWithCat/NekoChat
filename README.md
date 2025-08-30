@@ -14,9 +14,9 @@ Ciallo～(∠・ω< )⌒★
 ## 📸 应用预览
 
 <div align="center" style="display: flex; gap: 20px; flex-wrap: wrap;">
-  <img src="preview01.jpg" alt="聊天界面预览" style="width: 30%; max-width: 300px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-  <img src="preview02.jpg" alt="菜单界面预览" style="width: 30%; max-width: 300px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-  <img src="preview03.jpg" alt="设置界面预览" style="width: 30%; max-width: 300px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+  <img src="preview1.jpg" alt="聊天界面预览" style="width: 30%; max-width: 300px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+  <img src="preview2.jpg" alt="菜单界面预览" style="width: 30%; max-width: 300px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+  <img src="preview3.jpg" alt="设置界面预览" style="width: 30%; max-width: 300px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
 </div>
 
 ## 🚀 快速开始
@@ -29,23 +29,20 @@ Ciallo～(∠・ω< )⌒★
    cd NekoChat
    ```
 
-2. **配置 API Key**
-   
-   在项目根目录创建 `local.properties` 文件，添加你的 Gemini API Key：
-   ```properties
-   GEMINI_API_KEY=your_actual_api_key_here
-   ```
-
-3. **构建运行**
+2. **构建运行**
    - 使用 Android Studio 打开项目
    - 点击运行按钮或使用快捷键运行应用
+
+3. **配置 API Key**
+
+   在应用内的菜单页中设置你的 Gemini API Key。
 
 ### 获取 Gemini API Key
 
 1. 访问 [Google AI Studio](https://aistudio.google.com/app/apikey)
 2. 登录你的 Google 账号
 3. 创建新的 API Key
-4. 复制 Key 并配置到项目中
+4. 复制 Key 并配置到应用中
 
 ## 🛠️ 技术栈
 

@@ -1,6 +1,7 @@
 package com.sunwithcat.nekochat.data.repository
 
 import com.sunwithcat.nekochat.BuildConfig
+import com.sunwithcat.nekochat.data.local.ApiKeyManager
 import com.sunwithcat.nekochat.data.local.ChatMessageDao
 import com.sunwithcat.nekochat.data.local.PromptManager
 import com.sunwithcat.nekochat.data.model.Author
@@ -13,8 +14,10 @@ import com.sunwithcat.nekochat.data.remote.RetrofitClient
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-class ChatRepository(private val chatMessageDao: ChatMessageDao,
-    private val promptManager: PromptManager
+class ChatRepository(
+    private val chatMessageDao: ChatMessageDao,
+    private val promptManager: PromptManager,
+    private val apiKeyManager: ApiKeyManager
     ) {
     fun getChatHistory(): Flow<List<ChatMessage>> {
         return chatMessageDao.getAllMessages().map { entities ->
@@ -66,7 +69,7 @@ class ChatRepository(private val chatMessageDao: ChatMessageDao,
 
             val request = GeminiRequest(contents = contents)
             val response =
-                    RetrofitClient.apiService.generateContent(request, BuildConfig.GEMINI_API_KEY)
+                    RetrofitClient.apiService.generateContent(request, apiKeyManager.getApiKey())
 
             val modelResponseText =
                     response.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text

@@ -2,6 +2,7 @@
 
 package com.sunwithcat.nekochat.ui.chat
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -9,12 +10,16 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Info
@@ -26,17 +31,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.sunwithcat.nekochat.data.local.ApiKeyManager
 import com.sunwithcat.nekochat.data.model.Author
 import com.sunwithcat.nekochat.data.model.ChatMessage
 import kotlinx.coroutines.launch
 
-
 @Composable
-fun ChatScreen(onNavigateToSettings: () -> Unit,
-               onNavigateToAbout: () -> Unit) {
+fun ChatScreen(onNavigateToSettings: () -> Unit, onNavigateToAbout: () -> Unit) {
         val context = LocalContext.current
         val factory = ChatViewModelFactory(context)
         val viewModel: ChatViewModel = viewModel(factory = factory)
@@ -52,6 +60,21 @@ fun ChatScreen(onNavigateToSettings: () -> Unit,
         // 是否显示删除弹窗
         var showDeleteDialog by remember { mutableStateOf(false) }
 
+        // 是否显示 API key弹窗
+        var showApikeyDialog by remember { mutableStateOf(false) }
+
+        if (showApikeyDialog) {
+                ApiKeyInputDialog(
+                        onDismiss = { showApikeyDialog = false },
+                        onConfirm = { apiKey ->
+                                val apiKeyManager = ApiKeyManager(context)
+                                apiKeyManager.saveApiKey(apiKey)
+                                Toast.makeText(context, "人家会好好记住这个秘密的喵~", Toast.LENGTH_SHORT).show()
+                                showApikeyDialog = false
+                        }
+                )
+        }
+
         // 获取 LazyColumn 的滚动状态
         val lazyListState = rememberLazyListState()
 
@@ -63,9 +86,7 @@ fun ChatScreen(onNavigateToSettings: () -> Unit,
         // 当消息列表更新时，滚动到最新消息
         LaunchedEffect(messages.size) {
                 if (messages.isNotEmpty()) {
-                        lazyListState.animateScrollToItem(
-                                messages.lastIndex
-                        )
+                        lazyListState.animateScrollToItem(messages.lastIndex)
                 }
         }
 
@@ -73,14 +94,14 @@ fun ChatScreen(onNavigateToSettings: () -> Unit,
                 drawerState = drawerState,
                 drawerContent = {
                         ModalDrawerSheet(
-                                drawerContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(0.98f)
+                                drawerContainerColor =
+                                        MaterialTheme.colorScheme.primaryContainer.copy(0.98f)
                         ) {
                                 Column(modifier = Modifier.statusBarsPadding()) {
                                         Column(
-                                                modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
-                                                        .padding(vertical = 24.dp),
+                                                modifier =
+                                                        Modifier.fillMaxWidth()
+                                                                .padding(vertical = 24.dp),
                                                 horizontalAlignment = Alignment.CenterHorizontally
                                         ) {
                                                 Text(
@@ -95,66 +116,89 @@ fun ChatScreen(onNavigateToSettings: () -> Unit,
                                         }
                                 }
                                 Modifier.padding(horizontal = 16.dp)
-                                HorizontalDivider(modifier = Modifier.padding(8.dp))
+                                HorizontalDivider(
+                                        thickness = 0.5.dp,
+                                        color =
+                                                MaterialTheme.colorScheme.onSurface.copy(
+                                                        alpha = 0.1f
+                                                )
+                                )
 
                                 Spacer(modifier = Modifier.height(16.dp))
 
                                 NavigationDrawerItem(
-                                    icon = {
-                                        Icon(
-                                            Icons.Outlined.ChatBubbleOutline,
-                                            contentDescription = "新对话"
-                                        )
-                                    },
-                                    label = {Text(text = "开始新对话")},
-                                    selected = selectedItem == "new_chat",
-                                    onClick = {
-                                            selectedItem = "new_chat"
-                                    },
-                                    modifier = Modifier.padding(horizontal = 12.dp),
-                                        colors = NavigationDrawerItemDefaults.colors(
-                                                unselectedContainerColor = Color.Transparent,
-                                                selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-                                        )
+                                        icon = {
+                                                Icon(
+                                                        Icons.Default.VpnKey,
+                                                        contentDescription = "设置API Key"
+                                                )
+                                        },
+                                        label = { Text(text = "设置API Key") },
+                                        selected = false,
+                                        onClick = {
+                                                scope.launch { drawerState.close() }
+                                                showApikeyDialog = true
+                                        },
+                                        modifier = Modifier.padding(horizontal = 12.dp)
+                                )
+
+                                NavigationDrawerItem(
+                                        icon = {
+                                                Icon(
+                                                        Icons.Outlined.ChatBubbleOutline,
+                                                        contentDescription = "新对话"
+                                                )
+                                        },
+                                        label = { Text(text = "开始新对话") },
+                                        selected = selectedItem == "new_chat",
+                                        onClick = { selectedItem = "new_chat" },
+                                        modifier = Modifier.padding(horizontal = 12.dp),
+                                        colors =
+                                                NavigationDrawerItemDefaults.colors(
+                                                        unselectedContainerColor =
+                                                                Color.Transparent,
+                                                        selectedContainerColor =
+                                                                MaterialTheme.colorScheme.primary
+                                                                        .copy(alpha = 0.2f)
+                                                )
                                 )
                                 NavigationDrawerItem(
                                         icon = {
                                                 Icon(
-                                                        Icons.Outlined.History, contentDescription = "历史记录")
+                                                        Icons.Outlined.History,
+                                                        contentDescription = "历史记录"
+                                                )
                                         },
-                                        label = { Text(text = "历史记录")},
+                                        label = { Text(text = "历史记录") },
                                         selected = selectedItem == "history",
-                                        onClick = {
-                                                selectedItem = "history"
-                                        },
+                                        onClick = { selectedItem = "history" },
                                         modifier = Modifier.padding(horizontal = 12.dp),
-                                        colors = NavigationDrawerItemDefaults.colors(
-                                                unselectedContainerColor = Color.Transparent,
-                                                selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-                                        )
+                                        colors =
+                                                NavigationDrawerItemDefaults.colors(
+                                                        unselectedContainerColor =
+                                                                Color.Transparent,
+                                                        selectedContainerColor =
+                                                                MaterialTheme.colorScheme.primary
+                                                                        .copy(alpha = 0.2f)
+                                                )
                                 )
                                 Spacer(modifier = Modifier.weight(1f))
                                 HorizontalDivider(
-                                        modifier = Modifier.padding(horizontal = 8.dp),
+                                        thickness = 0.5.dp,
+                                        color =
+                                                MaterialTheme.colorScheme.onSurface.copy(
+                                                        alpha = 0.1f
+                                                )
                                 )
                                 Spacer(modifier = Modifier.height(16.dp))
                                 NavigationDrawerItem(
                                         icon = {
-                                                Icon(
-                                                        Icons.Outlined.Info,
-                                                        contentDescription = "关于"
-                                                )
+                                                Icon(Icons.Outlined.Info, contentDescription = "关于")
                                         },
-                                        label = {
-                                                Text(
-                                                        text = "关于 NekoChat"
-                                                )
-                                        },
+                                        label = { Text(text = "关于 NekoChat") },
                                         selected = selectedItem == "about",
                                         onClick = {
-                                                scope.launch {
-                                                        drawerState.close()
-                                                }
+                                                scope.launch { drawerState.close() }
                                                 onNavigateToAbout()
                                         },
                                         modifier = Modifier.padding(horizontal = 12.dp)
@@ -169,17 +213,18 @@ fun ChatScreen(onNavigateToSettings: () -> Unit,
                                         title = { Text("Neko Chat") },
                                         colors =
                                                 TopAppBarDefaults.topAppBarColors(
-                                                        containerColor = MaterialTheme.colorScheme.primary,
                                                         titleContentColor =
-                                                                MaterialTheme.colorScheme.onPrimary,
-                                                        navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                                                                MaterialTheme.colorScheme.primary,
+                                                        navigationIconContentColor =
+                                                                MaterialTheme.colorScheme.primary
                                                 ),
                                         navigationIcon = {
                                                 IconButton(
                                                         onClick = {
                                                                 scope.launch {
                                                                         drawerState.apply {
-                                                                                if(isClosed) open() else close()
+                                                                                if (isClosed) open()
+                                                                                else close()
                                                                         }
                                                                 }
                                                         }
@@ -193,9 +238,12 @@ fun ChatScreen(onNavigateToSettings: () -> Unit,
                                         actions = {
                                                 IconButton(onClick = onNavigateToSettings) {
                                                         Icon(
-                                                                imageVector = Icons.Default.Settings,
+                                                                imageVector =
+                                                                        Icons.Default.Settings,
                                                                 contentDescription = "设置",
-                                                                tint = MaterialTheme.colorScheme.onPrimary
+                                                                tint =
+                                                                        MaterialTheme.colorScheme
+                                                                                .primary
                                                         )
                                                 }
                                                 IconButton(
@@ -205,19 +253,20 @@ fun ChatScreen(onNavigateToSettings: () -> Unit,
                                                         Icon(
                                                                 imageVector = Icons.Default.Delete,
                                                                 contentDescription = "清空聊天记录",
-                                                                tint = MaterialTheme.colorScheme.onPrimary
+                                                                tint =
+                                                                        MaterialTheme.colorScheme
+                                                                                .primary
                                                         )
                                                 }
                                         }
-
                                 )
                         },
                         bottomBar = {}
                 ) { paddingValues ->
                         if (showDeleteDialog) {
                                 AlertDialog(
-                                        onDismissRequest = {showDeleteDialog = false},
-                                        title = { Text("喵生震惊！")},
+                                        onDismissRequest = { showDeleteDialog = false },
+                                        title = { Text("喵生震惊！") },
                                         text = { Text("喂！不准删，笨蛋！删掉了...咬你哦！\n(｀Δ´)") },
                                         confirmButton = {
                                                 TextButton(
@@ -226,19 +275,25 @@ fun ChatScreen(onNavigateToSettings: () -> Unit,
                                                                 showDeleteDialog = false
                                                         }
                                                 ) {
-                                                        Text("确定", color = MaterialTheme.colorScheme.error)
+                                                        Text(
+                                                                "确定",
+                                                                color =
+                                                                        MaterialTheme.colorScheme
+                                                                                .error
+                                                        )
                                                 }
                                         },
                                         dismissButton = {
-                                                TextButton(
-                                                        onClick = {showDeleteDialog = false}
-                                                ) {
+                                                TextButton(onClick = { showDeleteDialog = false }) {
                                                         Text("取消")
                                                 }
                                         }
                                 )
                         }
-                        Column(modifier = Modifier.fillMaxSize().padding(paddingValues).imePadding()) {
+                        Column(
+                                modifier =
+                                        Modifier.fillMaxSize().padding(paddingValues).imePadding()
+                        ) {
                                 Box(modifier = Modifier.weight(1f)) {
                                         // 空状态提示
                                         if (messages.isEmpty()) {
@@ -247,8 +302,11 @@ fun ChatScreen(onNavigateToSettings: () -> Unit,
                                                         contentAlignment = Alignment.Center
                                                 ) {
                                                         Text(
-                                                                text = "快来和本喵对话吧~\uD83D\uDC3E(ฅ>ω<*ฅ)",
-                                                                style = MaterialTheme.typography.titleLarge,
+                                                                text =
+                                                                        "快来和本喵对话吧~\uD83D\uDC3E(ฅ>ω<*ฅ)",
+                                                                style =
+                                                                        MaterialTheme.typography
+                                                                                .titleLarge,
                                                                 color =
                                                                         MaterialTheme.colorScheme
                                                                                 .onSurfaceVariant
@@ -259,14 +317,18 @@ fun ChatScreen(onNavigateToSettings: () -> Unit,
                                                 LazyColumn(
                                                         modifier =
                                                                 Modifier.fillMaxSize()
-                                                                        .padding(horizontal = 16.dp),
+                                                                        .padding(
+                                                                                horizontal = 16.dp
+                                                                        ),
                                                         reverseLayout = false,
                                                         state = lazyListState // 将滚动状态传递给 LazyColumn
                                                 ) {
                                                         items(
                                                                 items = messages,
                                                                 key = { message -> message.id }
-                                                        ) { message -> ChatMessageItem(message = message) }
+                                                        ) { message ->
+                                                                ChatMessageItem(message = message)
+                                                        }
                                                 }
                                 }
 
@@ -282,7 +344,8 @@ fun ChatScreen(onNavigateToSettings: () -> Unit,
                                                         viewModel.sendMessage(userInput)
                                                         userInput = "" // 发送后清空输入框
                                                 },
-                                                isSendingEnabled = !uiState.isModelProcessing // 模型处理时禁用发送按钮
+                                                isSendingEnabled =
+                                                        !uiState.isModelProcessing // 模型处理时禁用发送按钮
                                         )
                                         Text(
                                                 text = "Based on Google Gemini-2.5-Flash",
@@ -293,6 +356,53 @@ fun ChatScreen(onNavigateToSettings: () -> Unit,
                         }
                 }
         }
+}
+
+@Composable
+fun ApiKeyInputDialog(onDismiss: () -> Unit, onConfirm: (String) -> Unit) {
+        var apiKey by remember { mutableStateOf(TextFieldValue("")) }
+        val context = LocalContext.current
+        val apiKeyManager = ApiKeyManager(context)
+        val currentApiKey = apiKeyManager.getApiKey()
+
+        var passwordVisible by remember { mutableStateOf(false) }
+
+        LaunchedEffect(Unit) { apiKey = TextFieldValue(currentApiKey) }
+
+        AlertDialog(
+                onDismissRequest = onDismiss,
+                title = { Text("设置 Gemini API 密钥") },
+                text = {
+                        OutlinedTextField(
+                                value = apiKey,
+                                onValueChange = { apiKey = it },
+                                label = { Text("Gemini API 密钥") },
+                                singleLine = true,
+                                visualTransformation =
+                                        if (passwordVisible) VisualTransformation.None
+                                        else PasswordVisualTransformation(),
+                                keyboardOptions =
+                                        KeyboardOptions(keyboardType = KeyboardType.Password),
+                                trailingIcon = {
+                                        val image =
+                                                if (passwordVisible) Icons.Filled.Visibility
+                                                else Icons.Filled.VisibilityOff
+
+                                        val description = if (passwordVisible) "隐藏密码" else "显示密码"
+                                        IconButton(
+                                                onClick = { passwordVisible = !passwordVisible }
+                                        ) {
+                                                Icon(
+                                                        imageVector = image,
+                                                        contentDescription = description
+                                                )
+                                        }
+                                }
+                        )
+                },
+                confirmButton = { TextButton(onClick = { onConfirm(apiKey.text) }) { Text("保存") } },
+                dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } }
+        )
 }
 
 @Composable
