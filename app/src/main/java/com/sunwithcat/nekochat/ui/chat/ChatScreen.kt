@@ -44,9 +44,15 @@ import com.sunwithcat.nekochat.data.model.ChatMessage
 import kotlinx.coroutines.launch
 
 @Composable
-fun ChatScreen(onNavigateToSettings: () -> Unit, onNavigateToAbout: () -> Unit) {
+fun ChatScreen(
+        conversationId: Long,
+        onNavigateToSettings: () -> Unit,
+        onNavigateToAbout: () -> Unit,
+        onNavigateToHistory: () -> Unit,
+        onNavigateToNewChat: () -> Unit
+) {
         val context = LocalContext.current
-        val factory = ChatViewModelFactory(context)
+        val factory = ChatViewModelFactory(context,conversationId)
         val viewModel: ChatViewModel = viewModel(factory = factory)
 
         // 收集状态，状态改变时UI自动重建
@@ -150,8 +156,14 @@ fun ChatScreen(onNavigateToSettings: () -> Unit, onNavigateToAbout: () -> Unit) 
                                                 )
                                         },
                                         label = { Text(text = "开始新对话") },
-                                        selected = selectedItem == "new_chat",
-                                        onClick = { selectedItem = "new_chat" },
+                                        selected = conversationId == -1L,
+                                        onClick = {
+                                                selectedItem = "new_chat"
+                                                scope.launch {
+                                                        drawerState.close()
+                                                }
+                                                onNavigateToNewChat()
+                                                  },
                                         modifier = Modifier.padding(horizontal = 12.dp),
                                         colors =
                                                 NavigationDrawerItemDefaults.colors(
@@ -171,7 +183,10 @@ fun ChatScreen(onNavigateToSettings: () -> Unit, onNavigateToAbout: () -> Unit) 
                                         },
                                         label = { Text(text = "历史记录") },
                                         selected = selectedItem == "history",
-                                        onClick = { selectedItem = "history" },
+                                        onClick = {
+                                                scope.launch { drawerState.close() }
+                                                onNavigateToHistory()
+                                        },
                                         modifier = Modifier.padding(horizontal = 12.dp),
                                         colors =
                                                 NavigationDrawerItemDefaults.colors(

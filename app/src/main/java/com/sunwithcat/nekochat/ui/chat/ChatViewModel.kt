@@ -6,26 +6,41 @@ import com.sunwithcat.nekochat.data.model.Author
 import com.sunwithcat.nekochat.data.model.ChatMessage
 import com.sunwithcat.nekochat.data.repository.ChatRepository
 import java.util.UUID
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 data class ChatUiState(val isModelProcessing: Boolean = false)
 
-class ChatViewModel(private val chatRepository: ChatRepository) : ViewModel() {
+class ChatViewModel(private val chatRepository: ChatRepository, private val conversationId: Long) :
+        ViewModel() {
+
+    private val _currentConversationId = MutableStateFlow(conversationId)
+
+    init {
+        // 确保_currentConversationId正确初始化，即使值相同也强制更新
+        _currentConversationId.value = conversationId
+    }
 
     private val _isModelProcessing = MutableStateFlow(false)
 
     private val _chatHistory: StateFlow<List<ChatMessage>> =
-            chatRepository
-                    .getChatHistory()
-                    // 将 Flow 转换为 StateFlow，可以在 ViewModel 的生命周期内被安全地观察
+            _currentConversationId
+                    .flatMapLatest { id ->
+                        if (id == -1L) {
+                            flowOf(emptyList())
+                        } else {
+                            chatRepository.getChatHistory(id)
+                        }
+                    }
                     .stateIn(
                             scope = viewModelScope,
-                            started = SharingStarted.WhileSubscribed(5000), // 5秒后如果没有观察者就停止
+                            started = SharingStarted.WhileSubscribed(5000),
                             initialValue = emptyList()
                     )
 
@@ -69,13 +84,22 @@ class ChatViewModel(private val chatRepository: ChatRepository) : ViewModel() {
 
         viewModelScope.launch {
             _isModelProcessing.value = true
-            // 只需调用 repository 的方法，UI 会通过 Flow 自动更新
-            chatRepository.sendMessage(userInput, _chatHistory.value)
+            val newConversationId =
+                    chatRepository.sendMessage(
+                            userInput,
+                            _chatHistory.value,
+                            _currentConversationId.value
+                    )
+            if (_currentConversationId.value == -1L) {
+                _currentConversationId.value = newConversationId
+            }
             _isModelProcessing.value = false
         }
     }
 
     fun clearChatHistory() {
-        viewModelScope.launch { chatRepository.clearChatHistory() }
+        if (_currentConversationId.value != -1L) {
+            viewModelScope.launch { chatRepository.clearChatHistory(_currentConversationId.value) }
+        }
     }
 }

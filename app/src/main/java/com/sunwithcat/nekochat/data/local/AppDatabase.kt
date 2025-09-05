@@ -5,8 +5,9 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.sunwithcat.nekochat.data.model.ChatMessageEntity
+import com.sunwithcat.nekochat.data.model.Conversation
 
-@Database(entities = [ChatMessageEntity::class], version = 1)
+@Database(entities = [ChatMessageEntity::class, Conversation::class], version = 2)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun chatMessageDao(): ChatMessageDao
@@ -25,6 +26,7 @@ abstract class AppDatabase : RoomDatabase() {
                                                 AppDatabase::class.java,
                                                 "neko_chat_database" // 数据库文件的名字
                                         )
+                                        .fallbackToDestructiveMigration() // 清除旧数据
                                         .build()
                         INSTANCE = instance
                         instance

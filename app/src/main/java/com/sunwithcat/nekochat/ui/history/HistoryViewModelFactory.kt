@@ -1,4 +1,4 @@
-package com.sunwithcat.nekochat.ui.chat
+package com.sunwithcat.nekochat.ui.history
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
@@ -8,24 +8,17 @@ import com.sunwithcat.nekochat.data.local.AppDatabase
 import com.sunwithcat.nekochat.data.local.PromptManager
 import com.sunwithcat.nekochat.data.repository.ChatRepository
 
-class ChatViewModelFactory(
-    private val context: Context,
-    private val conversationId: Long
-) : ViewModelProvider.Factory {
+class HistoryViewModelFactory(private val context: Context) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(ChatViewModel::class.java)) {
-            // 获取数据库 DAO
+        if(modelClass.isAssignableFrom(HistoryViewModel::class.java)) {
             val dao = AppDatabase.getInstance(context).chatMessageDao()
-            // 创建 PromptManager 实例
             val promptManager = PromptManager(context.applicationContext)
-            // 获取 ApiKeyManager 实例
             val apiKeyManager = ApiKeyManager(context.applicationContext)
-            // 创建 Repository
-            val repository = ChatRepository(dao, promptManager, apiKeyManager)
-            // 创建 ViewModel
+            val repository = ChatRepository(dao,promptManager,apiKeyManager)
+
             @Suppress("UNCHECKED_CAST")
-            return ChatViewModel(repository, conversationId) as T
+            return HistoryViewModel(repository) as T
         }
-        throw IllegalArgumentException("Unknown ViewModel class")
+        throw IllegalArgumentException("UNKNOWN ViewModel class")
     }
 }
