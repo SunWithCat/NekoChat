@@ -13,6 +13,7 @@ import com.sunwithcat.nekochat.ui.history.HistoryScreen
 import com.sunwithcat.nekochat.ui.settings.SettingsScreen
 
 object Routes {
+    const val NEW_CHAT_SCREEN = "new-chat"
     const val CHAT_SCREEN = "chat/{conversationId}"
     const val SETTINGS_SCREEN = "SettingsScreen"
     const val ABOUT_SCREEN = "AboutScreen"
@@ -20,7 +21,7 @@ object Routes {
 }
 
 fun navigateToNewChat(navController: NavController) {
-    navController.navigate("chat/-1") {
+    navController.navigate(Routes.NEW_CHAT_SCREEN) {
         popUpTo(navController.graph.startDestinationId) { inclusive = true }
         launchSingleTop = true
     }
@@ -30,7 +31,16 @@ fun navigateToNewChat(navController: NavController) {
 fun AppNavigation() {
     val navController = rememberNavController()
 
-    NavHost(navController = navController, startDestination = Routes.CHAT_SCREEN) {
+    NavHost(navController = navController, startDestination = Routes.NEW_CHAT_SCREEN) {
+        composable(Routes.NEW_CHAT_SCREEN) {
+            ChatScreen(
+                    conversationId = -1L,
+                    onNavigateToSettings = { navController.navigate(Routes.SETTINGS_SCREEN) },
+                    onNavigateToAbout = { navController.navigate(Routes.ABOUT_SCREEN) },
+                    onNavigateToHistory = { navController.navigate(Routes.HISTORY_SCREEN) },
+                    onNavigateToNewChat = { navigateToNewChat(navController) }
+            )
+        }
         composable(
                 route = Routes.CHAT_SCREEN,
                 arguments = listOf(navArgument("conversationId") { type = NavType.LongType })

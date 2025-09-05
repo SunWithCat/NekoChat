@@ -7,13 +7,19 @@ import com.sunwithcat.nekochat.data.repository.ChatRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 class HistoryViewModel(private val chatRepository: ChatRepository) : ViewModel() {
     val conversations: StateFlow<List<Conversation>> =
-        chatRepository.getAllConversations()
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5000),
-                initialValue = emptyList()
-            )
+            chatRepository
+                    .getAllConversations()
+                    .stateIn(
+                            scope = viewModelScope,
+                            started = SharingStarted.WhileSubscribed(5000),
+                            initialValue = emptyList()
+                    )
+
+    fun deleteConversation(conversationId: Long) {
+        viewModelScope.launch { chatRepository.deleteConversation(conversationId) }
+    }
 }

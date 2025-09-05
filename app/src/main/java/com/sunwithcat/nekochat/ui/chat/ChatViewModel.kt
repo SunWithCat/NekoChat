@@ -28,7 +28,7 @@ class ChatViewModel(private val chatRepository: ChatRepository, private val conv
     }
 
     private val _isModelProcessing = MutableStateFlow(false)
-
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     private val _chatHistory: StateFlow<List<ChatMessage>> =
             _currentConversationId
                     .flatMapLatest { id ->
@@ -83,16 +83,16 @@ class ChatViewModel(private val chatRepository: ChatRepository, private val conv
         }
 
         viewModelScope.launch {
-            _isModelProcessing.value = true
-            val newConversationId =
-                    chatRepository.sendMessage(
-                            userInput,
-                            _chatHistory.value,
-                            _currentConversationId.value
-                    )
+            val conversationId =
+                    chatRepository.saveUserMessage(userInput, _currentConversationId.value)
             if (_currentConversationId.value == -1L) {
-                _currentConversationId.value = newConversationId
+                _currentConversationId.value = conversationId
             }
+
+            _isModelProcessing.value = true
+
+            chatRepository.fetchModelResponse(userInput, _chatHistory.value, conversationId)
+
             _isModelProcessing.value = false
         }
     }

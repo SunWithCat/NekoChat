@@ -163,7 +163,7 @@ fun ChatScreen(
                                                         drawerState.close()
                                                 }
                                                 onNavigateToNewChat()
-                                                  },
+                                        },
                                         modifier = Modifier.padding(horizontal = 12.dp),
                                         colors =
                                                 NavigationDrawerItemDefaults.colors(
