@@ -89,7 +89,7 @@ fun ConversationItem(conversation: Conversation, onClick: () -> Unit, onDeleteCl
             confirmButton = {
                 TextButton(
                     onClick = {
-                        onDeleteClick
+                        onDeleteClick()
                         showDeleteDialog = false
                     }
                 ) {

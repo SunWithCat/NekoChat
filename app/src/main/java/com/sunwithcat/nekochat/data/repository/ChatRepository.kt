@@ -57,6 +57,17 @@ class ChatRepository(
                 chatHistory: List<ChatMessage>,
                 conversationId: Long
         ) {
+                // 在网络请求前检查
+                if(apiKeyManager.getApiKey().isBlank()) {
+                        val apiKeyMissingError = ChatMessageEntity(
+                                conversationId = conversationId,
+                                content = "喵~ 主人还没有设置 API Key 呐，去侧边栏设置一下吧！",
+                                author = Author.MODEL.name
+                        )
+                        chatMessageDao.insertMessage(apiKeyMissingError)
+                        return
+                }
+
                 try {
                         var historyForApi: List<ChatMessage> =
                                 chatHistory.filter {
@@ -76,8 +87,9 @@ class ChatRepository(
                         val currentUserMessage =
                                 ChatMessage(content = userInput, author = Author.USER)
                         historyForApi = historyForApi + currentUserMessage
-
-                        historyForApi = historyForApi.takeLast(30)
+                        // 上下文长度
+                        val historyLines = promptManager.getLength()
+                        historyForApi = historyForApi.takeLast(historyLines)
 
                         val contents =
                                 historyForApi.map { message ->

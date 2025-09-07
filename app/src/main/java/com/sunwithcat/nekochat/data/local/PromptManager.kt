@@ -8,6 +8,7 @@ class PromptManager(context: Context) {
 
     companion object {
         private const val KEY_PROMPT = "system_prompt"
+        private const val KEY_CHAT_LENGTH = "chat_length"
     }
 
     fun savePrompt(prompt: String) {
@@ -16,5 +17,13 @@ class PromptManager(context: Context) {
 
     fun getPrompt(): String {
         return prefs.getString(KEY_PROMPT, AIConfig.DEFAULT_SYSTEM_PROMPT) ?: AIConfig.DEFAULT_SYSTEM_PROMPT
+    }
+
+    fun saveLength(length: Int) {
+        prefs.edit().putInt(KEY_CHAT_LENGTH, length).apply()
+    }
+
+    fun getLength(): Int {
+        return prefs.getInt(KEY_CHAT_LENGTH, AIConfig.DEFAULT_CHAT_LENGTH)
     }
 }

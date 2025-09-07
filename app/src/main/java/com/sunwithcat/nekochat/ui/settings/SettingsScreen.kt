@@ -1,10 +1,13 @@
 package com.sunwithcat.nekochat.ui.settings
 
 import android.widget.Toast
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Done
@@ -27,8 +30,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.sunwithcat.nekochat.data.model.AIConfig
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,6 +43,8 @@ fun SettingsScreen(onBack: () -> Unit) {
     val viewModel: SettingsViewModel = viewModel(factory = factory)
 
     var promptText by remember { mutableStateOf(viewModel.getCurrentPrompt()) }
+
+    var historyLength by remember { mutableStateOf(viewModel.getCurrentLength().toString()) }
 
     var showRestoreDialog by remember { mutableStateOf(false) }
 
@@ -88,6 +95,10 @@ fun SettingsScreen(onBack: () -> Unit) {
                             IconButton(
                                     onClick = {
                                         viewModel.savePrompt(promptText)
+                                        if (historyLength.isNotBlank()) {
+                                            val lengthToSave = historyLength.toIntOrNull() ?: AIConfig.DEFAULT_CHAT_LENGTH
+                                            viewModel.saveLength(lengthToSave)
+                                        }
                                         Toast.makeText(context, "保存成功！喵~", Toast.LENGTH_SHORT)
                                                 .show()
                                         onBack()
@@ -98,13 +109,33 @@ fun SettingsScreen(onBack: () -> Unit) {
             }
     ) { paddingValues ->
         Column(
-                modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp).imePadding()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(16.dp)
+                    .imePadding(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             OutlinedTextField(
-                    value = promptText,
-                    onValueChange = { promptText = it },
-                    modifier = Modifier.fillMaxSize(),
-                    label = { Text("在这里编辑你的专属猫娘设定...") }
+                value = promptText,
+                onValueChange = { promptText = it },
+                modifier = Modifier.fillMaxWidth().weight(1f),
+                label = { Text("告诉我，我是一只怎样的猫娘？") },
+                placeholder = {
+                    Text( "比如：你是一只白色短毛的异瞳猫娘，名字叫Neko，" +
+                            "性格傲娇，喜欢吃鱼干，说话会带“喵”作为口癖，" +
+                            "当别人夸你时会嘴硬但偷偷开心...")
+                }
+            )
+            OutlinedTextField(
+                value = historyLength.toString(),
+                onValueChange = { newText ->
+                    historyLength = newText.filter { it.isDigit() } },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("主人，希望我记住多少对话呀？") },
+                supportingText = {Text("数字越大，我记得越牢哦！但也会消耗更多能量喵...")},
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                singleLine = true
             )
         }
     }

@@ -41,6 +41,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sunwithcat.nekochat.data.local.ApiKeyManager
 import com.sunwithcat.nekochat.data.model.Author
 import com.sunwithcat.nekochat.data.model.ChatMessage
+import com.sunwithcat.nekochat.ui.AppSessionManager
 import kotlinx.coroutines.launch
 
 @Composable
@@ -71,14 +72,28 @@ fun ChatScreen(
 
         if (showApikeyDialog) {
                 ApiKeyInputDialog(
-                        onDismiss = { showApikeyDialog = false },
+                        onDismiss = {
+                                showApikeyDialog = false
+                                AppSessionManager.hasShownApiKeyPromptThisSession = true
+                        },
                         onConfirm = { apiKey ->
                                 val apiKeyManager = ApiKeyManager(context)
                                 apiKeyManager.saveApiKey(apiKey)
                                 Toast.makeText(context, "人家会好好记住这个秘密的喵~", Toast.LENGTH_SHORT).show()
+                                AppSessionManager.hasShownApiKeyPromptThisSession = true
                                 showApikeyDialog = false
                         }
                 )
+        }
+
+        // 首次进入检查 API 密钥是否为空
+        LaunchedEffect(Unit) {
+                if (conversationId == -1L) {
+                        val apiKeyManager = ApiKeyManager(context)
+                        if (apiKeyManager.getApiKey().isBlank() && !AppSessionManager.hasShownApiKeyPromptThisSession) {
+                                showApikeyDialog = true
+                        }
+                }
         }
 
         // 获取 LazyColumn 的滚动状态

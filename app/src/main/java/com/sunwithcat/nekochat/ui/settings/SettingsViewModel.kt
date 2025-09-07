@@ -14,4 +14,10 @@ class SettingsViewModel(private val promptManager: PromptManager): ViewModel() {
     fun getDefaultPrompt(): String {
         return AIConfig.DEFAULT_SYSTEM_PROMPT
     }
+    fun getCurrentLength(): Int {
+        return promptManager.getLength()
+    }
+    fun saveLength(newLength: Int) {
+        promptManager.saveLength(newLength)
+    }
 }
