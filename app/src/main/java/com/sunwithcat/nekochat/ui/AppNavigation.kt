@@ -1,6 +1,7 @@
 package com.sunwithcat.nekochat.ui
 
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -39,12 +40,7 @@ fun AppNavigation() {
                 onNavigateToAbout = { navController.navigate(Routes.ABOUT_SCREEN) },
                 onNavigateToHistory = { navController.navigate(Routes.HISTORY_SCREEN) },
                 onNavigateToNewChat = {
-                    navController.navigate(Routes.CHAT_SCREEN) {
-                        launchSingleTop = true
-                        popUpTo(navController.graph.startDestinationId) {
-                            saveState = false
-                        }
-                    }
+                    navigateToChat(navController)
                 }
             )
         }
@@ -56,10 +52,18 @@ fun AppNavigation() {
             HistoryScreen(
                 onBack = { navController.popBackStack() },
                 onConversationClick = { conversationId ->
-                    navController.navigate("${Routes.CHAT_SCREEN}?conversationId=$conversationId")
+                    navigateToChat(navController, conversationId)
                 }
             )
         }
     }
 }
 
+fun navigateToChat(navController: NavController, conversationId: Long = -1L) {
+    val route = "${Routes.CHAT_SCREEN}?conversationId=$conversationId"
+    navController.navigate(route) {
+        popUpTo(navController.graph.id) {
+            inclusive = true
+        }
+    }
+}
