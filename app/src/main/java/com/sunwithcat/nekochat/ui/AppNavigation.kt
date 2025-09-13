@@ -1,7 +1,6 @@
 package com.sunwithcat.nekochat.ui
 
 import androidx.compose.runtime.Composable
-import androidx.navigation.NavController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -13,37 +12,25 @@ import com.sunwithcat.nekochat.ui.history.HistoryScreen
 import com.sunwithcat.nekochat.ui.settings.SettingsScreen
 
 object Routes {
-    const val NEW_CHAT_SCREEN = "new-chat"
-    const val CHAT_SCREEN = "chat/{conversationId}"
+    const val CHAT_SCREEN = "chat"
     const val SETTINGS_SCREEN = "SettingsScreen"
     const val ABOUT_SCREEN = "AboutScreen"
     const val HISTORY_SCREEN = "HistoryScreen"
-}
-
-fun navigateToNewChat(navController: NavController) {
-    navController.navigate(Routes.NEW_CHAT_SCREEN) {
-        popUpTo(navController.graph.startDestinationId) { inclusive = true }
-        launchSingleTop = true
-    }
 }
 
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
 
-    NavHost(navController = navController, startDestination = Routes.NEW_CHAT_SCREEN) {
-        composable(Routes.NEW_CHAT_SCREEN) {
-            ChatScreen(
-                conversationId = -1L,
-                onNavigateToSettings = { navController.navigate(Routes.SETTINGS_SCREEN) },
-                onNavigateToAbout = { navController.navigate(Routes.ABOUT_SCREEN) },
-                onNavigateToHistory = { navController.navigate(Routes.HISTORY_SCREEN) },
-                onNavigateToNewChat = { navigateToNewChat(navController) }
-            )
-        }
+    NavHost(navController = navController, startDestination = Routes.CHAT_SCREEN) {
         composable(
-            route = Routes.CHAT_SCREEN,
-            arguments = listOf(navArgument("conversationId") { type = NavType.LongType })
+            route = "${Routes.CHAT_SCREEN}?conversationId={conversationId}",
+            arguments = listOf(
+                navArgument("conversationId") {
+                    type = NavType.LongType
+                    defaultValue = -1L
+                }
+            )
         ) { backStackEntry ->
             val conversationId = backStackEntry.arguments?.getLong("conversationId") ?: -1L
             ChatScreen(
@@ -51,7 +38,14 @@ fun AppNavigation() {
                 onNavigateToSettings = { navController.navigate(Routes.SETTINGS_SCREEN) },
                 onNavigateToAbout = { navController.navigate(Routes.ABOUT_SCREEN) },
                 onNavigateToHistory = { navController.navigate(Routes.HISTORY_SCREEN) },
-                onNavigateToNewChat = { navigateToNewChat(navController) }
+                onNavigateToNewChat = {
+                    navController.navigate(Routes.CHAT_SCREEN) {
+                        launchSingleTop = true
+                        popUpTo(navController.graph.startDestinationId) {
+                            saveState = false
+                        }
+                    }
+                }
             )
         }
         composable(Routes.SETTINGS_SCREEN) {
@@ -62,9 +56,10 @@ fun AppNavigation() {
             HistoryScreen(
                 onBack = { navController.popBackStack() },
                 onConversationClick = { conversationId ->
-                    navController.navigate("chat/$conversationId")
+                    navController.navigate("${Routes.CHAT_SCREEN}?conversationId=$conversationId")
                 }
             )
         }
     }
 }
+
