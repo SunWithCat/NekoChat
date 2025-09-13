@@ -33,44 +33,46 @@ fun HistoryScreen(onBack: () -> Unit, onConversationClick: (Long) -> Unit) {
 
 
     Scaffold(
-            topBar = {
-                TopAppBar(
-                        title = { Text("历史记录") },
-                        colors =
-                                TopAppBarDefaults.topAppBarColors(
-                                        titleContentColor = MaterialTheme.colorScheme.primary,
-                                        navigationIconContentColor =
-                                                MaterialTheme.colorScheme.primary
-                                ),
-                        navigationIcon = {
-                            IconButton(onClick = onBack) {
-                                Icon(
-                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                        contentDescription = "返回"
-                                )
-                            }
-                        }
-                )
-            }
+        topBar = {
+            TopAppBar(
+                title = { Text("历史记录") },
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        titleContentColor = MaterialTheme.colorScheme.primary,
+                        navigationIconContentColor =
+                            MaterialTheme.colorScheme.primary
+                    ),
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "返回"
+                        )
+                    }
+                }
+            )
+        }
     ) { paddingValues ->
         if (conversations.isEmpty()) {
             Box(
-                    modifier = Modifier.fillMaxSize().padding(paddingValues),
-                    contentAlignment = Alignment.Center
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentAlignment = Alignment.Center
             ) {
                 Text(
-                        text = "还没有历史记录哦~",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = "还没有历史记录哦~",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         } else {
             LazyColumn(modifier = Modifier.padding(paddingValues)) {
                 items(items = conversations, key = { it.id }) { conversation ->
                     ConversationItem(
-                            conversation = conversation,
-                            onClick = { onConversationClick(conversation.id) },
-                            onDeleteClick = { viewModel.deleteConversation(conversation.id) }
+                        conversation = conversation,
+                        onClick = { onConversationClick(conversation.id) },
+                        onDeleteClick = { viewModel.deleteConversation(conversation.id) }
                     )
                 }
             }
@@ -81,11 +83,11 @@ fun HistoryScreen(onBack: () -> Unit, onConversationClick: (Long) -> Unit) {
 @Composable
 fun ConversationItem(conversation: Conversation, onClick: () -> Unit, onDeleteClick: () -> Unit) {
     var showDeleteDialog by remember { mutableStateOf(false) }
-    if(showDeleteDialog) {
+    if (showDeleteDialog) {
         AlertDialog(
-            onDismissRequest = {showDeleteDialog = false},
-            title = {Text("对话删除")},
-            text = {Text("删除后不可恢复。确认删除吗？")},
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("对话删除") },
+            text = { Text("删除后不可恢复。确认删除吗？") },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -108,21 +110,21 @@ fun ConversationItem(conversation: Conversation, onClick: () -> Unit, onDeleteCl
         )
     }
     ListItem(
-            headlineContent = { Text(conversation.title, maxLines = 1) },
-            supportingContent = {
-                Text(DateFormatter.formatTimestamp(conversation.lastMessageTimestamp))
-            },
-            trailingContent = {
-                IconButton(onClick = {
-                    showDeleteDialog = true
-                }) {
-                    Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = "删除对话",
-                            tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-            },
-            modifier = Modifier.clickable(onClick = onClick)
+        headlineContent = { Text(conversation.title, maxLines = 1) },
+        supportingContent = {
+            Text(DateFormatter.formatTimestamp(conversation.lastMessageTimestamp))
+        },
+        trailingContent = {
+            IconButton(onClick = {
+                showDeleteDialog = true
+            }) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "删除对话",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        },
+        modifier = Modifier.clickable(onClick = onClick)
     )
 }

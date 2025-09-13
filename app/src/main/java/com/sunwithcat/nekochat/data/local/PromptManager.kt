@@ -16,7 +16,8 @@ class PromptManager(context: Context) {
     }
 
     fun getPrompt(): String {
-        return prefs.getString(KEY_PROMPT, AIConfig.DEFAULT_SYSTEM_PROMPT) ?: AIConfig.DEFAULT_SYSTEM_PROMPT
+        return prefs.getString(KEY_PROMPT, AIConfig.DEFAULT_SYSTEM_PROMPT)
+            ?: AIConfig.DEFAULT_SYSTEM_PROMPT
     }
 
     fun saveLength(length: Int) {

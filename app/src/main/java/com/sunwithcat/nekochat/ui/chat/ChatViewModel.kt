@@ -5,20 +5,20 @@ import androidx.lifecycle.viewModelScope
 import com.sunwithcat.nekochat.data.model.Author
 import com.sunwithcat.nekochat.data.model.ChatMessage
 import com.sunwithcat.nekochat.data.repository.ChatRepository
-import java.util.UUID
-import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 data class ChatUiState(val isModelProcessing: Boolean = false)
 
 class ChatViewModel(private val chatRepository: ChatRepository, private val conversationId: Long) :
-        ViewModel() {
+    ViewModel() {
 
     private val _currentConversationId = MutableStateFlow(conversationId)
 
@@ -28,53 +28,54 @@ class ChatViewModel(private val chatRepository: ChatRepository, private val conv
     }
 
     private val _isModelProcessing = MutableStateFlow(false)
+
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     private val _chatHistory: StateFlow<List<ChatMessage>> =
-            _currentConversationId
-                    .flatMapLatest { id ->
-                        if (id == -1L) {
-                            flowOf(emptyList())
-                        } else {
-                            chatRepository.getChatHistory(id)
-                        }
-                    }
-                    .stateIn(
-                            scope = viewModelScope,
-                            started = SharingStarted.WhileSubscribed(5000),
-                            initialValue = emptyList()
-                    )
+        _currentConversationId
+            .flatMapLatest { id ->
+                if (id == -1L) {
+                    flowOf(emptyList())
+                } else {
+                    chatRepository.getChatHistory(id)
+                }
+            }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = emptyList()
+            )
 
     // 将两个 Flow 合并成最终的 UI State Flow
     val uiState: StateFlow<ChatUiState> =
-            combine(_isModelProcessing, _chatHistory) { isProcessing, _ ->
-                        ChatUiState(isModelProcessing = isProcessing)
-                    }
-                    .stateIn(
-                            scope = viewModelScope,
-                            started = SharingStarted.WhileSubscribed(5000),
-                            initialValue = ChatUiState()
-                    )
+        combine(_isModelProcessing, _chatHistory) { isProcessing, _ ->
+            ChatUiState(isModelProcessing = isProcessing)
+        }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = ChatUiState()
+            )
 
     // 将消息列表单独暴露给 UI
     val messages: StateFlow<List<ChatMessage>> =
-            combine(_chatHistory, _isModelProcessing) { history, isProcessing ->
-                        if (isProcessing) {
-                            history +
-                                    ChatMessage(
-                                            id = UUID.randomUUID().toString(),
-                                            content = "...",
-                                            author = Author.MODEL,
-                                            isProcessing = true
-                                    )
-                        } else {
-                            history
-                        }
-                    }
-                    .stateIn(
-                            scope = viewModelScope,
-                            started = SharingStarted.WhileSubscribed(5000),
-                            initialValue = emptyList()
-                    )
+        combine(_chatHistory, _isModelProcessing) { history, isProcessing ->
+            if (isProcessing) {
+                history +
+                        ChatMessage(
+                            id = UUID.randomUUID().toString(),
+                            content = "...",
+                            author = Author.MODEL,
+                            isProcessing = true
+                        )
+            } else {
+                history
+            }
+        }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = emptyList()
+            )
 
     // 简化的 sendMessage 方法
     fun sendMessage(userInput: String) {
@@ -84,7 +85,7 @@ class ChatViewModel(private val chatRepository: ChatRepository, private val conv
 
         viewModelScope.launch {
             val conversationId =
-                    chatRepository.saveUserMessage(userInput, _currentConversationId.value)
+                chatRepository.saveUserMessage(userInput, _currentConversationId.value)
             if (_currentConversationId.value == -1L) {
                 _currentConversationId.value = conversationId
             }

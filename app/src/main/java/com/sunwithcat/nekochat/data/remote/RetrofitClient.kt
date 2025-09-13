@@ -12,7 +12,7 @@ object RetrofitClient {
 
     // 日志拦截器
     private val loggingInterceptor =
-            HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY }
+        HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY }
 
     // 创建OkHttp客户端
     private val httpClient = OkHttpClient.Builder()
@@ -25,10 +25,10 @@ object RetrofitClient {
     // 懒加载创建Retrofit实例
     private val retrofit: Retrofit by lazy {
         Retrofit.Builder()
-                .baseUrl(BASE_URL) // 设置基础URL
-                .client(httpClient) // 设置自定义的OkHttp客户端
-                .addConverterFactory(GsonConverterFactory.create()) // 设置JSON转换器
-                .build()
+            .baseUrl(BASE_URL) // 设置基础URL
+            .client(httpClient) // 设置自定义的OkHttp客户端
+            .addConverterFactory(GsonConverterFactory.create()) // 设置JSON转换器
+            .build()
     }
 
     // 暴露获取ApiService实例的方法

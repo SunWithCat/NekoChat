@@ -34,24 +34,24 @@ fun AppNavigation() {
     NavHost(navController = navController, startDestination = Routes.NEW_CHAT_SCREEN) {
         composable(Routes.NEW_CHAT_SCREEN) {
             ChatScreen(
-                    conversationId = -1L,
-                    onNavigateToSettings = { navController.navigate(Routes.SETTINGS_SCREEN) },
-                    onNavigateToAbout = { navController.navigate(Routes.ABOUT_SCREEN) },
-                    onNavigateToHistory = { navController.navigate(Routes.HISTORY_SCREEN) },
-                    onNavigateToNewChat = { navigateToNewChat(navController) }
+                conversationId = -1L,
+                onNavigateToSettings = { navController.navigate(Routes.SETTINGS_SCREEN) },
+                onNavigateToAbout = { navController.navigate(Routes.ABOUT_SCREEN) },
+                onNavigateToHistory = { navController.navigate(Routes.HISTORY_SCREEN) },
+                onNavigateToNewChat = { navigateToNewChat(navController) }
             )
         }
         composable(
-                route = Routes.CHAT_SCREEN,
-                arguments = listOf(navArgument("conversationId") { type = NavType.LongType })
+            route = Routes.CHAT_SCREEN,
+            arguments = listOf(navArgument("conversationId") { type = NavType.LongType })
         ) { backStackEntry ->
             val conversationId = backStackEntry.arguments?.getLong("conversationId") ?: -1L
             ChatScreen(
-                    conversationId = conversationId,
-                    onNavigateToSettings = { navController.navigate(Routes.SETTINGS_SCREEN) },
-                    onNavigateToAbout = { navController.navigate(Routes.ABOUT_SCREEN) },
-                    onNavigateToHistory = { navController.navigate(Routes.HISTORY_SCREEN) },
-                    onNavigateToNewChat = { navigateToNewChat(navController) }
+                conversationId = conversationId,
+                onNavigateToSettings = { navController.navigate(Routes.SETTINGS_SCREEN) },
+                onNavigateToAbout = { navController.navigate(Routes.ABOUT_SCREEN) },
+                onNavigateToHistory = { navController.navigate(Routes.HISTORY_SCREEN) },
+                onNavigateToNewChat = { navigateToNewChat(navController) }
             )
         }
         composable(Routes.SETTINGS_SCREEN) {
@@ -60,10 +60,10 @@ fun AppNavigation() {
         composable(Routes.ABOUT_SCREEN) { AboutScreen(onBack = { navController.popBackStack() }) }
         composable(Routes.HISTORY_SCREEN) {
             HistoryScreen(
-                    onBack = { navController.popBackStack() },
-                    onConversationClick = { conversationId ->
-                        navController.navigate("chat/$conversationId")
-                    }
+                onBack = { navController.popBackStack() },
+                onConversationClick = { conversationId ->
+                    navController.navigate("chat/$conversationId")
+                }
             )
         }
     }

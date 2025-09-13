@@ -14,23 +14,24 @@ abstract class AppDatabase : RoomDatabase() {
 
     companion object {
         // @Volatile 确保 INSTANCE 变量在所有线程中立即可见
-        @Volatile private var INSTANCE: AppDatabase? = null
+        @Volatile
+        private var INSTANCE: AppDatabase? = null
 
         fun getInstance(context: Context): AppDatabase {
             // synchronized 确保同一时间只有一个线程可以执行这段代码，避免重复创建实例
             return INSTANCE
-                    ?: synchronized(this) {
-                        val instance =
-                                Room.databaseBuilder(
-                                                context.applicationContext,
-                                                AppDatabase::class.java,
-                                                "neko_chat_database" // 数据库文件的名字
-                                        )
-                                        .fallbackToDestructiveMigration() // 清除旧数据
-                                        .build()
-                        INSTANCE = instance
-                        instance
-                    }
+                ?: synchronized(this) {
+                    val instance =
+                        Room.databaseBuilder(
+                            context.applicationContext,
+                            AppDatabase::class.java,
+                            "neko_chat_database" // 数据库文件的名字
+                        )
+                            .fallbackToDestructiveMigration() // 清除旧数据
+                            .build()
+                    INSTANCE = instance
+                    instance
+                }
         }
     }
 }
