@@ -39,9 +39,7 @@ fun AppNavigation() {
                 onNavigateToSettings = { navController.navigate(Routes.SETTINGS_SCREEN) },
                 onNavigateToAbout = { navController.navigate(Routes.ABOUT_SCREEN) },
                 onNavigateToHistory = { navController.navigate(Routes.HISTORY_SCREEN) },
-                onNavigateToNewChat = {
-                    navigateToChat(navController)
-                }
+                onNavigateToNewChat = { navigateToChat(navController) }
             )
         }
         composable(Routes.SETTINGS_SCREEN) {
