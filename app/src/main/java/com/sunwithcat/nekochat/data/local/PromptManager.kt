@@ -9,6 +9,8 @@ class PromptManager(context: Context) {
     companion object {
         private const val KEY_PROMPT = "system_prompt"
         private const val KEY_CHAT_LENGTH = "chat_length"
+        private const val KEY_TEMPERATURE = "ai_temperature"
+        private const val DEFAULT_TEMPERATURE = 0.7f
     }
 
     fun savePrompt(prompt: String) {
@@ -26,5 +28,13 @@ class PromptManager(context: Context) {
 
     fun getLength(): Int {
         return prefs.getInt(KEY_CHAT_LENGTH, AIConfig.DEFAULT_CHAT_LENGTH)
+    }
+
+    fun saveTemperature(temperature: Float) {
+        prefs.edit().putFloat(KEY_TEMPERATURE, temperature).apply()
+    }
+
+    fun getTemperature(): Float {
+        return prefs.getFloat(KEY_TEMPERATURE, DEFAULT_TEMPERATURE)
     }
 }

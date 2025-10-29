@@ -1,5 +1,6 @@
 package com.sunwithcat.nekochat.ui.settings
 
+import android.icu.text.DecimalFormat
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,12 +20,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -45,6 +48,10 @@ fun SettingsScreen(onBack: () -> Unit) {
     var promptText by remember { mutableStateOf(viewModel.getCurrentPrompt()) }
 
     var historyLength by remember { mutableStateOf(viewModel.getCurrentLength().toString()) }
+
+    var temperature by remember { mutableFloatStateOf(viewModel.getCurrentTemperature()) }
+
+    var tempFormatter = remember { DecimalFormat("0.0") }
 
     var showRestoreDialog by remember { mutableStateOf(false) }
 
@@ -100,6 +107,7 @@ fun SettingsScreen(onBack: () -> Unit) {
                                     historyLength.toIntOrNull() ?: AIConfig.DEFAULT_CHAT_LENGTH
                                 viewModel.saveLength(lengthToSave)
                             }
+                            viewModel.saveTemperature(temperature)
                             Toast.makeText(context, "保存成功！喵~", Toast.LENGTH_SHORT)
                                 .show()
                             onBack()
@@ -132,6 +140,23 @@ fun SettingsScreen(onBack: () -> Unit) {
                     )
                 }
             )
+            Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                Text(
+                    text = "调节人家的...“温度”？(${tempFormatter.format(temperature)})",
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+                Slider(
+                    value = temperature,
+                    onValueChange = { temperature = it }, // 拖动时更新状态
+                    valueRange = 0.0f..1.0f, // 温度范围
+                    steps = 9
+                )
+                Text(
+                    text = "温度越低，人家回答越稳定哦；温度越高，人家越...有创造力（也许会胡说八道喵？Σ(ﾟдﾟ;)）",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
             OutlinedTextField(
                 value = historyLength.toString(),
                 onValueChange = { newText ->

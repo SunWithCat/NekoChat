@@ -7,7 +7,14 @@ import retrofit2.http.Query
 
 // 发送给AI的请求体的数据结构
 data class GeminiRequest(
-    val contents: List<Content>
+    val contents: List<Content>,
+    val generationConfig: GenerationConfig? = null
+)
+
+data class GenerationConfig(
+    val temperature: Float? = null,
+    val topP: Float? = null,
+    val topK: Int? = null
 )
 
 data class Content(
@@ -21,7 +28,7 @@ data class Part(
 
 // AI返回的数据结构
 data class GeminiResponse(
-    val candidates: List<Candidate>
+    val candidates: List<Candidate>,
 )
 
 data class Candidate(

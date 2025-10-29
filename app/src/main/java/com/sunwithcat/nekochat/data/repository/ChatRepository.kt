@@ -9,6 +9,7 @@ import com.sunwithcat.nekochat.data.model.ChatMessageEntity
 import com.sunwithcat.nekochat.data.model.Conversation
 import com.sunwithcat.nekochat.data.remote.Content
 import com.sunwithcat.nekochat.data.remote.GeminiRequest
+import com.sunwithcat.nekochat.data.remote.GenerationConfig
 import com.sunwithcat.nekochat.data.remote.Part
 import com.sunwithcat.nekochat.data.remote.RetrofitClient
 import kotlinx.coroutines.flow.Flow
@@ -101,7 +102,10 @@ class ChatRepository(
                     )
                 }
 
-            val request = GeminiRequest(contents = contents)
+            val currentTemperature = promptManager.getTemperature()
+            val generationConfig = GenerationConfig(temperature = currentTemperature)
+
+            val request = GeminiRequest(contents = contents, generationConfig = generationConfig)
             val response =
                 RetrofitClient.apiService.generateContent(
                     request,

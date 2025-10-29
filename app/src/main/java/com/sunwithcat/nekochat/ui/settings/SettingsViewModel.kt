@@ -4,20 +4,32 @@ import androidx.lifecycle.ViewModel
 import com.sunwithcat.nekochat.data.local.PromptManager
 import com.sunwithcat.nekochat.data.model.AIConfig
 
-class SettingsViewModel(private val promptManager: PromptManager): ViewModel() {
+class SettingsViewModel(private val promptManager: PromptManager) : ViewModel() {
     fun getCurrentPrompt(): String {
         return promptManager.getPrompt()
     }
+
     fun savePrompt(newPrompt: String) {
         promptManager.savePrompt(newPrompt)
     }
+
     fun getDefaultPrompt(): String {
         return AIConfig.DEFAULT_SYSTEM_PROMPT
     }
+
     fun getCurrentLength(): Int {
         return promptManager.getLength()
     }
+
     fun saveLength(newLength: Int) {
         promptManager.saveLength(newLength)
+    }
+
+    fun getCurrentTemperature(): Float {
+        return promptManager.getTemperature()
+    }
+
+    fun saveTemperature(newTemperature: Float) {
+        promptManager.saveTemperature(newTemperature)
     }
 }
