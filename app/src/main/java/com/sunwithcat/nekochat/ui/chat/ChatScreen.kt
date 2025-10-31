@@ -4,6 +4,7 @@ package com.sunwithcat.nekochat.ui.chat
 
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -65,7 +66,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
@@ -365,7 +368,19 @@ fun ChatScreen(
                         .padding(paddingValues)
                         .imePadding()
             ) {
-                Box(modifier = Modifier.weight(1f)) {
+                // 获取焦点管理器，用于清除焦点和文本选择
+                val focusManager = LocalFocusManager.current
+                
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .pointerInput(Unit) {
+                            detectTapGestures {
+                                // 点击空白区域时清除焦点，这会清除文本选择
+                                focusManager.clearFocus()
+                            }
+                        }
+                ) {
                     // 空状态提示
                     if (messages.isEmpty()) {
                         Box(
