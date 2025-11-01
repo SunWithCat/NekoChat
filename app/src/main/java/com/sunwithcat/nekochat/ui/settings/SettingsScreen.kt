@@ -170,37 +170,9 @@ fun SettingsScreen(onBack: () -> Unit) {
                 horizontalArrangement = Arrangement.SpaceEvenly, // 均匀分布
                 verticalAlignment = Alignment.Top
             ) {
-                // 用户头像
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    AsyncImage(
-                        model = userAvatarUri ?: R.drawable.ic_user_default, // 使用默认头像
-                        contentDescription = "用户头像",
-                        modifier = Modifier
-                            .size(80.dp)
-                            .clip(CircleShape)
-                            .clickable {
-                                userAvatarPickerLauncher.launch("image/*")
-                            },
-                        contentScale = ContentScale.Crop // 裁剪填充
-                    )
-                    Text("用户", style = MaterialTheme.typography.bodyMedium)
-                    TextButton(
-                        onClick = {
-                            avatarManager.saveUserAvatar(null)
-                            userAvatarUri = null
-                            Toast.makeText(context, "主人头像已恢复默认喵~", Toast.LENGTH_SHORT).show()
-                        },
-                        enabled = (userAvatarUri != null)
-                    ) {
-                        Text("恢复默认")
-                    }
-                }
-
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     AsyncImage(
                         model = modelAvatarUri ?: R.drawable.ic_neko, // 使用默认头像
@@ -221,6 +193,34 @@ fun SettingsScreen(onBack: () -> Unit) {
                             Toast.makeText(context, "人家变回原来的样子啦~", Toast.LENGTH_SHORT).show()
                         },
                         enabled = (modelAvatarUri != null)
+                    ) {
+                        Text("恢复默认")
+                    }
+                }
+                // 用户头像
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    AsyncImage(
+                        model = userAvatarUri ?: R.drawable.ic_user_default, // 使用默认头像
+                        contentDescription = "用户头像",
+                        modifier = Modifier
+                            .size(80.dp)
+                            .clip(CircleShape)
+                            .clickable {
+                                userAvatarPickerLauncher.launch("image/*")
+                            },
+                        contentScale = ContentScale.Crop // 裁剪填充
+                    )
+                    Text("我", style = MaterialTheme.typography.bodyMedium)
+                    TextButton(
+                        onClick = {
+                            avatarManager.saveUserAvatar(null)
+                            userAvatarUri = null
+                            Toast.makeText(context, "主人头像已恢复默认喵~", Toast.LENGTH_SHORT).show()
+                        },
+                        enabled = (userAvatarUri != null)
                     ) {
                         Text("恢复默认")
                     }
