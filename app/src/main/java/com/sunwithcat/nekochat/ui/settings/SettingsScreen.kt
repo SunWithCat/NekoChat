@@ -1,13 +1,20 @@
 package com.sunwithcat.nekochat.ui.settings
 
 import android.icu.text.DecimalFormat
+import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -31,12 +38,19 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import com.sunwithcat.nekochat.R
+import com.sunwithcat.nekochat.data.local.AvatarManager
 import com.sunwithcat.nekochat.data.model.AIConfig
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,6 +58,30 @@ fun SettingsScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val factory = SettingsViewModelFactory(context)
     val viewModel: SettingsViewModel = viewModel(factory = factory)
+
+    val avatarManager = remember { AvatarManager(context) }
+
+    var userAvatarUri by remember { mutableStateOf(avatarManager.getUserAvatarUriString()) }
+    var modelAvatarUri by remember { mutableStateOf(avatarManager.getModelAvatarUriString()) }
+
+
+    val userAvatarPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            avatarManager.saveUserAvatar(uri)
+            userAvatarUri = uri.toString() // 更新状态以刷新 UI
+        }
+    }
+
+    val modelAvatarPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            avatarManager.saveModelAvatar(uri)
+            modelAvatarUri = uri.toString()
+        }
+    }
 
     var promptText by remember { mutableStateOf(viewModel.getCurrentPrompt()) }
 
@@ -123,8 +161,73 @@ fun SettingsScreen(onBack: () -> Unit) {
                 .padding(paddingValues)
                 .padding(16.dp)
                 .imePadding(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // 头像选择
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly, // 均匀分布
+                verticalAlignment = Alignment.Top
+            ) {
+                // 用户头像
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    AsyncImage(
+                        model = userAvatarUri ?: R.drawable.ic_user_default, // 使用默认头像
+                        contentDescription = "用户头像",
+                        modifier = Modifier
+                            .size(80.dp)
+                            .clip(CircleShape)
+                            .clickable {
+                                userAvatarPickerLauncher.launch("image/*")
+                            },
+                        contentScale = ContentScale.Crop // 裁剪填充
+                    )
+                    Text("用户", style = MaterialTheme.typography.bodyMedium)
+                    TextButton(
+                        onClick = {
+                            avatarManager.saveUserAvatar(null)
+                            userAvatarUri = null
+                            Toast.makeText(context, "主人头像已恢复默认喵~", Toast.LENGTH_SHORT).show()
+                        },
+                        enabled = (userAvatarUri != null)
+                    ) {
+                        Text("恢复默认")
+                    }
+                }
+
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    AsyncImage(
+                        model = modelAvatarUri ?: R.drawable.ic_neko, // 使用默认头像
+                        contentDescription = "猫娘头像",
+                        modifier = Modifier
+                            .size(80.dp)
+                            .clip(CircleShape)
+                            .clickable {
+                                modelAvatarPickerLauncher.launch("image/*")
+                            },
+                        contentScale = ContentScale.Crop
+                    )
+                    Text("猫娘", style = MaterialTheme.typography.bodyMedium)
+                    TextButton(
+                        onClick = {
+                            avatarManager.saveModelAvatar(null)
+                            modelAvatarUri = null
+                            Toast.makeText(context, "人家变回原来的样子啦~", Toast.LENGTH_SHORT).show()
+                        },
+                        enabled = (modelAvatarUri != null)
+                    ) {
+                        Text("恢复默认")
+                    }
+                }
+
+            }
+
             OutlinedTextField(
                 value = promptText,
                 onValueChange = { promptText = it },

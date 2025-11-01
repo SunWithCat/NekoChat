@@ -5,6 +5,7 @@ package com.sunwithcat.nekochat.ui.chat
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -67,6 +69,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.KeyboardType
@@ -76,7 +79,10 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import com.sunwithcat.nekochat.R
 import com.sunwithcat.nekochat.data.local.ApiKeyManager
+import com.sunwithcat.nekochat.data.local.AvatarManager
 import com.sunwithcat.nekochat.data.model.Author
 import com.sunwithcat.nekochat.data.model.ChatMessage
 import com.sunwithcat.nekochat.ui.AppSessionManager
@@ -93,6 +99,11 @@ fun ChatScreen(
     val context = LocalContext.current
     val factory = ChatViewModelFactory(context, conversationId)
     val viewModel: ChatViewModel = viewModel(factory = factory)
+
+    // 获取头像
+    val avatarManager = remember(context) { AvatarManager(context) }
+    val userAvatarUri = avatarManager.getUserAvatarUriString()
+    val modelAvatarUri = avatarManager.getModelAvatarUriString()
 
     // 收集状态，状态改变时UI自动重建
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -370,7 +381,7 @@ fun ChatScreen(
             ) {
                 // 获取焦点管理器，用于清除焦点和文本选择
                 val focusManager = LocalFocusManager.current
-                
+
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -414,7 +425,11 @@ fun ChatScreen(
                                 items = messages,
                                 key = { message -> message.id }
                             ) { message ->
-                                ChatMessageItem(message = message)
+                                ChatMessageItem(
+                                    message = message,
+                                    userAvatar = userAvatarUri,
+                                    modelAvatar = modelAvatarUri
+                                )
                             }
                         }
                 }
@@ -493,39 +508,75 @@ fun ApiKeyInputDialog(onDismiss: () -> Unit, onConfirm: (String) -> Unit) {
 }
 
 @Composable
-fun ChatMessageItem(message: ChatMessage) {
+fun ChatMessageItem(
+    message: ChatMessage,
+    userAvatar: String?,
+    modelAvatar: String?
+) {
     val isModel = message.author == Author.MODEL
-    val alignment = if (isModel) Alignment.CenterStart else Alignment.CenterEnd
-    val backgroundColor =
-        if (isModel) MaterialTheme.colorScheme.surfaceVariant
-        else MaterialTheme.colorScheme.primary
-    val textColor =
-        if (isModel) MaterialTheme.colorScheme.onSurfaceVariant
-        else MaterialTheme.colorScheme.onPrimary
-
-    // 用一个Box来控制对齐
-    Box(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        contentAlignment = alignment
+            .padding(vertical = 6.dp),
+        verticalAlignment = Alignment.Bottom, // 头像和气泡底部对齐
+        horizontalArrangement = if (isModel) Arrangement.Start else Arrangement.End
     ) {
+        // AI 头像在左边
+        if (isModel) {
+            AsyncImage(
+                model = modelAvatar ?: R.drawable.ic_neko,
+                contentDescription = "AI 头像",
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+        }
+        val alignment = if (isModel) Alignment.CenterStart else Alignment.CenterEnd
+        val backgroundColor =
+            if (isModel) MaterialTheme.colorScheme.surfaceVariant
+            else MaterialTheme.colorScheme.primary
+        val textColor =
+            if (isModel) MaterialTheme.colorScheme.onSurfaceVariant
+            else MaterialTheme.colorScheme.onPrimary
+
+        // 用一个Box来控制对齐
         Box(
-            modifier =
-                Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(backgroundColor)
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            modifier = Modifier.weight(1f, fill = false) // 气泡不会占据所有剩余空间
         ) {
-            SelectionContainer {
-                Text(
-                    text = message.content,
-                    color = textColor,
-                    style = MaterialTheme.typography.bodyLarge
-                )
+            Box(
+                modifier =
+                    Modifier
+                        .align(alignment)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(backgroundColor)
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                SelectionContainer {
+                    Text(
+                        text = message.content,
+                        color = textColor,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
             }
         }
+
+        // 用户头像在右边
+        if (!isModel) {
+            Spacer(modifier = Modifier.width(8.dp))
+            AsyncImage(
+                model = userAvatar ?: R.drawable.ic_user_default, // 用户默认头像
+                contentDescription = "用户头像",
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+        }
     }
+
 }
 
 @Composable
