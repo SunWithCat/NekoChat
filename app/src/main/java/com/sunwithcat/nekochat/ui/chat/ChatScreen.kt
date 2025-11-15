@@ -2,7 +2,6 @@
 
 package com.sunwithcat.nekochat.ui.chat
 
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -12,11 +11,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -32,23 +29,13 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material.icons.filled.VpnKey
-import androidx.compose.material.icons.outlined.ChatBubbleOutline
-import androidx.compose.material.icons.outlined.History
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalDrawerSheet
-import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.NavigationDrawerItem
-import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -56,13 +43,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -86,15 +71,13 @@ import com.sunwithcat.nekochat.data.local.AvatarManager
 import com.sunwithcat.nekochat.data.model.Author
 import com.sunwithcat.nekochat.data.model.ChatMessage
 import com.sunwithcat.nekochat.ui.AppSessionManager
-import kotlinx.coroutines.launch
 
 @Composable
 fun ChatScreen(
     conversationId: Long,
     onNavigateToSettings: () -> Unit,
-    onNavigateToAbout: () -> Unit,
-    onNavigateToHistory: () -> Unit,
-    onNavigateToNewChat: () -> Unit
+    onOpenDrawer: () -> Unit,
+    onShowApiKeyDialog: () -> Unit
 ) {
     val context = LocalContext.current
     val factory = ChatViewModelFactory(context, conversationId)
@@ -116,24 +99,7 @@ fun ChatScreen(
     // 是否显示删除弹窗
     var showDeleteDialog by remember { mutableStateOf(false) }
 
-    // 是否显示 API key弹窗
-    var showApikeyDialog by remember { mutableStateOf(false) }
-
-    if (showApikeyDialog) {
-        ApiKeyInputDialog(
-            onDismiss = {
-                showApikeyDialog = false
-                AppSessionManager.hasShownApiKeyPromptThisSession = true
-            },
-            onConfirm = { apiKey ->
-                val apiKeyManager = ApiKeyManager(context)
-                apiKeyManager.saveApiKey(apiKey)
-                Toast.makeText(context, "人家会好好记住这个秘密的喵~", Toast.LENGTH_SHORT).show()
-                AppSessionManager.hasShownApiKeyPromptThisSession = true
-                showApikeyDialog = false
-            }
-        )
-    }
+    var isMenuEnabled by remember { mutableStateOf(false) }
 
     // 首次进入检查 API 密钥是否为空
     LaunchedEffect(Unit) {
@@ -142,18 +108,16 @@ fun ChatScreen(
             if (apiKeyManager.getApiKey()
                     .isBlank() && !AppSessionManager.hasShownApiKeyPromptThisSession
             ) {
-                showApikeyDialog = true
+                onShowApiKeyDialog()
             }
         }
+        kotlinx.coroutines.delay(500)
+        isMenuEnabled = true
     }
 
     // 获取 LazyColumn 的滚动状态
     val lazyListState = rememberLazyListState()
 
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
-
-    var selectedItem by remember { mutableStateOf("new_chat") }
 
     // 当消息列表更新时，滚动到最新消息
     LaunchedEffect(messages.size) {
@@ -162,299 +126,173 @@ fun ChatScreen(
         }
     }
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            ModalDrawerSheet(
-                drawerContainerColor =
-                    MaterialTheme.colorScheme.primaryContainer.copy(0.98f)
-            ) {
-                Column(modifier = Modifier.statusBarsPadding()) {
-                    Column(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text("Neko Chat") },
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        titleContentColor =
+                            MaterialTheme.colorScheme.primary,
+                        navigationIconContentColor =
+                            MaterialTheme.colorScheme.primary
+                    ),
+                navigationIcon = {
+                    IconButton(
+                        onClick = {
+                            println("点击了菜单栏")
+                            if (isMenuEnabled) {
+                                println("可以点击")
+                                onOpenDrawer()
+                            } else {
+                                println("不可点击")
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Menu,
+                            contentDescription = "菜单"
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onNavigateToSettings) {
+                        Icon(
+                            imageVector =
+                                Icons.Default.Settings,
+                            contentDescription = "设置",
+                            tint =
+                                MaterialTheme.colorScheme
+                                    .primary
+                        )
+                    }
+                    IconButton(
+                        onClick = { showDeleteDialog = true },
+                        enabled = messages.isNotEmpty()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "清空聊天记录",
+                            tint =
+                                MaterialTheme.colorScheme
+                                    .primary
+                        )
+                    }
+                }
+            )
+        },
+        bottomBar = {}
+    ) { paddingValues ->
+        if (showDeleteDialog) {
+            AlertDialog(
+                onDismissRequest = { showDeleteDialog = false },
+                title = { Text("喵生震惊！") },
+                text = { Text("喂！不准删，笨蛋！删掉了...咬你哦！\n(｀Δ´)") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            viewModel.clearChatHistory()
+                            showDeleteDialog = false
+                        }
                     ) {
                         Text(
-                            text = "Neko Chat",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            text = "你的专属猫娘助手",
-                            style = MaterialTheme.typography.bodySmall
+                            "确定",
+                            color =
+                                MaterialTheme.colorScheme
+                                    .error
                         )
                     }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDeleteDialog = false }) {
+                        Text("取消")
+                    }
                 }
-                Modifier.padding(horizontal = 16.dp)
-                HorizontalDivider(
-                    thickness = 0.5.dp,
-                    color =
-                        MaterialTheme.colorScheme.onSurface.copy(
-                            alpha = 0.1f
-                        )
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                NavigationDrawerItem(
-                    icon = {
-                        Icon(
-                            Icons.Default.VpnKey,
-                            contentDescription = "设置API Key"
-                        )
-                    },
-                    label = { Text(text = "设置API Key") },
-                    selected = false,
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                        showApikeyDialog = true
-                    },
-                    modifier = Modifier.padding(horizontal = 12.dp)
-                )
-
-                NavigationDrawerItem(
-                    icon = {
-                        Icon(
-                            Icons.Outlined.ChatBubbleOutline,
-                            contentDescription = "新对话"
-                        )
-                    },
-                    label = { Text(text = "开始新对话") },
-                    selected = conversationId == -1L,
-                    onClick = {
-                        selectedItem = "new_chat"
-                        scope.launch {
-                            drawerState.close()
-                        }
-                        onNavigateToNewChat()
-                    },
-                    modifier = Modifier.padding(horizontal = 12.dp),
-                    colors =
-                        NavigationDrawerItemDefaults.colors(
-                            unselectedContainerColor =
-                                Color.Transparent,
-                            selectedContainerColor =
-                                MaterialTheme.colorScheme.primary
-                                    .copy(alpha = 0.2f)
-                        )
-                )
-                NavigationDrawerItem(
-                    icon = {
-                        Icon(
-                            Icons.Outlined.History,
-                            contentDescription = "历史记录"
-                        )
-                    },
-                    label = { Text(text = "历史记录") },
-                    selected = selectedItem == "history",
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                        onNavigateToHistory()
-                    },
-                    modifier = Modifier.padding(horizontal = 12.dp),
-                    colors =
-                        NavigationDrawerItemDefaults.colors(
-                            unselectedContainerColor =
-                                Color.Transparent,
-                            selectedContainerColor =
-                                MaterialTheme.colorScheme.primary
-                                    .copy(alpha = 0.2f)
-                        )
-                )
-                Spacer(modifier = Modifier.weight(1f))
-                HorizontalDivider(
-                    thickness = 0.5.dp,
-                    color =
-                        MaterialTheme.colorScheme.onSurface.copy(
-                            alpha = 0.1f
-                        )
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                NavigationDrawerItem(
-                    icon = {
-                        Icon(Icons.Outlined.Info, contentDescription = "关于")
-                    },
-                    label = { Text(text = "关于 NekoChat") },
-                    selected = selectedItem == "about",
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                        onNavigateToAbout()
-                    },
-                    modifier = Modifier.padding(horizontal = 12.dp)
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-            }
+            )
         }
-    ) {
-        Scaffold(
-            topBar = {
-                CenterAlignedTopAppBar(
-                    title = { Text("Neko Chat") },
-                    colors =
-                        TopAppBarDefaults.topAppBarColors(
-                            titleContentColor =
-                                MaterialTheme.colorScheme.primary,
-                            navigationIconContentColor =
-                                MaterialTheme.colorScheme.primary
-                        ),
-                    navigationIcon = {
-                        IconButton(
-                            onClick = {
-                                scope.launch {
-                                    drawerState.apply {
-                                        if (isClosed) open()
-                                        else close()
-                                    }
-                                }
-                            }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Menu,
-                                contentDescription = "菜单"
-                            )
-                        }
-                    },
-                    actions = {
-                        IconButton(onClick = onNavigateToSettings) {
-                            Icon(
-                                imageVector =
-                                    Icons.Default.Settings,
-                                contentDescription = "设置",
-                                tint =
-                                    MaterialTheme.colorScheme
-                                        .primary
-                            )
-                        }
-                        IconButton(
-                            onClick = { showDeleteDialog = true },
-                            enabled = messages.isNotEmpty()
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = "清空聊天记录",
-                                tint =
-                                    MaterialTheme.colorScheme
-                                        .primary
-                            )
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .imePadding()
+        ) {
+            // 获取焦点管理器，用于清除焦点和文本选择
+            val focusManager = LocalFocusManager.current
+
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .pointerInput(Unit) {
+                        detectTapGestures {
+                            // 点击空白区域时清除焦点，这会清除文本选择
+                            focusManager.clearFocus()
                         }
                     }
-                )
-            },
-            bottomBar = {}
-        ) { paddingValues ->
-            if (showDeleteDialog) {
-                AlertDialog(
-                    onDismissRequest = { showDeleteDialog = false },
-                    title = { Text("喵生震惊！") },
-                    text = { Text("喂！不准删，笨蛋！删掉了...咬你哦！\n(｀Δ´)") },
-                    confirmButton = {
-                        TextButton(
-                            onClick = {
-                                viewModel.clearChatHistory()
-                                showDeleteDialog = false
-                            }
-                        ) {
-                            Text(
-                                "确定",
-                                color =
-                                    MaterialTheme.colorScheme
-                                        .error
-                            )
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { showDeleteDialog = false }) {
-                            Text("取消")
-                        }
-                    }
-                )
-            }
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                        .imePadding()
             ) {
-                // 获取焦点管理器，用于清除焦点和文本选择
-                val focusManager = LocalFocusManager.current
-
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .pointerInput(Unit) {
-                            detectTapGestures {
-                                // 点击空白区域时清除焦点，这会清除文本选择
-                                focusManager.clearFocus()
-                            }
-                        }
-                ) {
-                    // 空状态提示
-                    if (messages.isEmpty()) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text =
-                                    "快来和本喵对话吧~\uD83D\uDC3E(ฅ>ω<*ฅ)",
-                                style =
-                                    MaterialTheme.typography
-                                        .titleLarge,
-                                color =
-                                    MaterialTheme.colorScheme
-                                        .onSurfaceVariant
+                // 空状态提示
+                if (messages.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text =
+                                "快来和本喵对话吧~\uD83D\uDC3E(ฅ>ω<*ฅ)",
+                            style =
+                                MaterialTheme.typography
+                                    .titleLarge,
+                            color =
+                                MaterialTheme.colorScheme
+                                    .onSurfaceVariant
+                        )
+                    }
+                } // 聊天消息列表
+                else
+                    LazyColumn(
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .padding(
+                                    horizontal = 16.dp
+                                ),
+                        reverseLayout = false,
+                        state = lazyListState // 将滚动状态传递给 LazyColumn
+                    ) {
+                        items(
+                            items = messages,
+                            key = { message -> message.id }
+                        ) { message ->
+                            ChatMessageItem(
+                                message = message,
+                                userAvatar = userAvatarUri,
+                                modelAvatar = modelAvatarUri
                             )
                         }
-                    } // 聊天消息列表
-                    else
-                        LazyColumn(
-                            modifier =
-                                Modifier
-                                    .fillMaxSize()
-                                    .padding(
-                                        horizontal = 16.dp
-                                    ),
-                            reverseLayout = false,
-                            state = lazyListState // 将滚动状态传递给 LazyColumn
-                        ) {
-                            items(
-                                items = messages,
-                                key = { message -> message.id }
-                            ) { message ->
-                                ChatMessageItem(
-                                    message = message,
-                                    userAvatar = userAvatarUri,
-                                    modelAvatar = modelAvatarUri
-                                )
-                            }
-                        }
-                }
+                    }
+            }
 
-                // 输入框和底部信息
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    MessageInput(
-                        value = userInput,
-                        onValueChange = { userInput = it },
-                        onSendClick = {
-                            viewModel.sendMessage(userInput)
-                            userInput = "" // 发送后清空输入框
-                        },
-                        isSendingEnabled =
-                            !uiState.isModelProcessing // 模型处理时禁用发送按钮
-                    )
-                    Text(
-                        text = "Based on Google Gemini-2.5-Flash",
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(vertical = 6.dp)
-                    )
-                }
+            // 输入框和底部信息
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                MessageInput(
+                    value = userInput,
+                    onValueChange = { userInput = it },
+                    onSendClick = {
+                        viewModel.sendMessage(userInput)
+                        userInput = "" // 发送后清空输入框
+                    },
+                    isSendingEnabled =
+                        !uiState.isModelProcessing // 模型处理时禁用发送按钮
+                )
+                Text(
+                    text = "Based on Google Gemini-2.5-Flash",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(vertical = 6.dp)
+                )
             }
         }
     }

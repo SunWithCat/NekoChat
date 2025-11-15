@@ -14,8 +14,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Done
@@ -51,7 +53,6 @@ import com.sunwithcat.nekochat.R
 import com.sunwithcat.nekochat.data.local.AvatarManager
 import com.sunwithcat.nekochat.data.model.AIConfig
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(onBack: () -> Unit) {
@@ -64,24 +65,21 @@ fun SettingsScreen(onBack: () -> Unit) {
     var userAvatarUri by remember { mutableStateOf(avatarManager.getUserAvatarUriString()) }
     var modelAvatarUri by remember { mutableStateOf(avatarManager.getModelAvatarUriString()) }
 
-
-    val userAvatarPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        if (uri != null) {
-            avatarManager.saveUserAvatar(uri)
-            userAvatarUri = uri.toString() // 更新状态以刷新 UI
+    val userAvatarPickerLauncher =
+        rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { uri: Uri? ->
+            if (uri != null) {
+                avatarManager.saveUserAvatar(uri)
+                userAvatarUri = uri.toString() // 更新状态以刷新 UI
+            }
         }
-    }
 
-    val modelAvatarPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        if (uri != null) {
-            avatarManager.saveModelAvatar(uri)
-            modelAvatarUri = uri.toString()
+    val modelAvatarPickerLauncher =
+        rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { uri: Uri? ->
+            if (uri != null) {
+                avatarManager.saveModelAvatar(uri)
+                modelAvatarUri = uri.toString()
+            }
         }
-    }
 
     var promptText by remember { mutableStateOf(viewModel.getCurrentPrompt()) }
 
@@ -142,7 +140,8 @@ fun SettingsScreen(onBack: () -> Unit) {
                             viewModel.savePrompt(promptText)
                             if (historyLength.isNotBlank()) {
                                 val lengthToSave =
-                                    historyLength.toIntOrNull() ?: AIConfig.DEFAULT_CHAT_LENGTH
+                                    historyLength.toIntOrNull()
+                                        ?: AIConfig.DEFAULT_CHAT_LENGTH
                                 viewModel.saveLength(lengthToSave)
                             }
                             viewModel.saveTemperature(temperature)
@@ -156,11 +155,13 @@ fun SettingsScreen(onBack: () -> Unit) {
         }
     ) { paddingValues ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp)
-                .imePadding(),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(paddingValues)
+                    .padding(16.dp)
+                    .imePadding(),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -177,12 +178,13 @@ fun SettingsScreen(onBack: () -> Unit) {
                     AsyncImage(
                         model = modelAvatarUri ?: R.drawable.ic_neko, // 使用默认头像
                         contentDescription = "猫娘头像",
-                        modifier = Modifier
-                            .size(80.dp)
-                            .clip(CircleShape)
-                            .clickable {
-                                modelAvatarPickerLauncher.launch("image/*")
-                            },
+                        modifier =
+                            Modifier
+                                .size(80.dp)
+                                .clip(CircleShape)
+                                .clickable {
+                                    modelAvatarPickerLauncher.launch("image/*")
+                                },
                         contentScale = ContentScale.Crop
                     )
                     Text("猫娘", style = MaterialTheme.typography.bodyMedium)
@@ -190,12 +192,11 @@ fun SettingsScreen(onBack: () -> Unit) {
                         onClick = {
                             avatarManager.saveModelAvatar(null)
                             modelAvatarUri = null
-                            Toast.makeText(context, "人家变回原来的样子啦~", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "人家变回原来的样子啦~", Toast.LENGTH_SHORT)
+                                .show()
                         },
                         enabled = (modelAvatarUri != null)
-                    ) {
-                        Text("恢复默认")
-                    }
+                    ) { Text("恢复默认") }
                 }
                 // 用户头像
                 Column(
@@ -205,12 +206,13 @@ fun SettingsScreen(onBack: () -> Unit) {
                     AsyncImage(
                         model = userAvatarUri ?: R.drawable.ic_user_default, // 使用默认头像
                         contentDescription = "用户头像",
-                        modifier = Modifier
-                            .size(80.dp)
-                            .clip(CircleShape)
-                            .clickable {
-                                userAvatarPickerLauncher.launch("image/*")
-                            },
+                        modifier =
+                            Modifier
+                                .size(80.dp)
+                                .clip(CircleShape)
+                                .clickable {
+                                    userAvatarPickerLauncher.launch("image/*")
+                                },
                         contentScale = ContentScale.Crop // 裁剪填充
                     )
                     Text("我", style = MaterialTheme.typography.bodyMedium)
@@ -218,22 +220,18 @@ fun SettingsScreen(onBack: () -> Unit) {
                         onClick = {
                             avatarManager.saveUserAvatar(null)
                             userAvatarUri = null
-                            Toast.makeText(context, "主人头像已恢复默认喵~", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "主人头像已恢复默认喵~", Toast.LENGTH_SHORT)
+                                .show()
                         },
                         enabled = (userAvatarUri != null)
-                    ) {
-                        Text("恢复默认")
-                    }
+                    ) { Text("恢复默认") }
                 }
-
             }
 
             OutlinedTextField(
                 value = promptText,
                 onValueChange = { promptText = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
+                modifier = Modifier.fillMaxWidth(),
                 label = { Text("告诉我，我是一只怎样的猫娘？") },
                 placeholder = {
                     Text(
@@ -262,9 +260,7 @@ fun SettingsScreen(onBack: () -> Unit) {
             }
             OutlinedTextField(
                 value = historyLength.toString(),
-                onValueChange = { newText ->
-                    historyLength = newText.filter { it.isDigit() }
-                },
+                onValueChange = { newText -> historyLength = newText.filter { it.isDigit() } },
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("主人，希望我记住多少对话呀？") },
                 supportingText = { Text("数字越大，我记得越牢哦！但也会消耗更多能量喵...") },

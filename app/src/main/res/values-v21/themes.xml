@@ -6,9 +6,9 @@
         <!-- 透明状态栏 -->
         <item name="android:statusBarColor">@android:color/transparent</item>
         <!-- 启用半透明状态栏 -->
-        <item name="android:windowTranslucentStatus">true</item>
+<!--        <item name="android:windowTranslucentStatus">true</item>-->
         <!-- 启用半透明导航栏 -->
-        <item name="android:windowTranslucentNavigation">true</item>
+<!--        <item name="android:windowTranslucentNavigation">true</item>-->
         <!-- 绘制系统栏背景 -->
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
     </style>
