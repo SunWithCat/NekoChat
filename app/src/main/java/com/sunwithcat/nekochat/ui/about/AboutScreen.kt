@@ -39,11 +39,14 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.activity.compose.BackHandler
 import com.sunwithcat.nekochat.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AboutScreen(onBack: () -> Unit) {
+    // 拦截系统返回手势，使用我们的 onBack
+    BackHandler(onBack = onBack)
     val context = LocalContext.current
     Scaffold(
         containerColor = MaterialTheme.colorScheme.primaryContainer,

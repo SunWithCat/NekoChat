@@ -81,7 +81,10 @@ fun ChatScreen(
 ) {
     val context = LocalContext.current
     val factory = ChatViewModelFactory(context, conversationId)
-    val viewModel: ChatViewModel = viewModel(factory = factory)
+    val viewModel: ChatViewModel = viewModel(
+        key = "chat_$conversationId", // 添加 key 确保正确的 ViewModel 实例
+        factory = factory
+    )
 
     // 获取头像
     val avatarManager = remember(context) { AvatarManager(context) }
@@ -99,10 +102,8 @@ fun ChatScreen(
     // 是否显示删除弹窗
     var showDeleteDialog by remember { mutableStateOf(false) }
 
-    var isMenuEnabled by remember { mutableStateOf(false) }
-
     // 首次进入检查 API 密钥是否为空
-    LaunchedEffect(Unit) {
+    LaunchedEffect(conversationId) {
         if (conversationId == -1L) {
             val apiKeyManager = ApiKeyManager(context)
             if (apiKeyManager.getApiKey()
@@ -111,8 +112,6 @@ fun ChatScreen(
                 onShowApiKeyDialog()
             }
         }
-        kotlinx.coroutines.delay(500)
-        isMenuEnabled = true
     }
 
     // 获取 LazyColumn 的滚动状态
@@ -141,13 +140,7 @@ fun ChatScreen(
                 navigationIcon = {
                     IconButton(
                         onClick = {
-                            println("点击了菜单栏")
-                            if (isMenuEnabled) {
-                                println("可以点击")
-                                onOpenDrawer()
-                            } else {
-                                println("不可点击")
-                            }
+                            onOpenDrawer()
                         }
                     ) {
                         Icon(

@@ -63,6 +63,29 @@ fun AppNavigation() {
 
     var showApikeyDialog by remember { mutableStateOf(false) }
 
+    val safePopBackStack: () -> Unit = {
+        val currentDestination = navController.currentDestination?.route
+        
+        // 检查是否还有可以返回的目的地
+        when {
+            currentDestination == null -> {
+                android.util.Log.w("AppNavigation", "Cannot pop back stack: current destination is null")
+            }
+            currentDestination.startsWith("chat") -> {
+                // 检查是否在主屏幕（ChatScreen），如果是则不允许返回
+                android.util.Log.w("AppNavigation", "Cannot pop back stack: already at ChatScreen (root)")
+            }
+            else -> {
+                try {
+                    navController.popBackStack()
+                    android.util.Log.d("AppNavigation", "popBackStack completed successfully")
+                } catch (e: Exception) {
+                    android.util.Log.e("AppNavigation", "Error popping back stack", e)
+                }
+            }
+        }
+    }
+
     if (showApikeyDialog) {
         ApiKeyInputDialog(
             onDismiss = {
@@ -219,17 +242,30 @@ fun AppNavigation() {
                 ChatScreen(
                     conversationId = conversationId,
                     onNavigateToSettings = { navController.navigate(Routes.SETTINGS_SCREEN) },
-                    onOpenDrawer = { scope.launch { drawerState.open() } },
+                    onOpenDrawer = {
+                        // 使用更安全的方式打开 drawer
+                        android.util.Log.d("AppNavigation", "onOpenDrawer called, drawerState: isClosed=${drawerState.isClosed}, isAnimationRunning=${drawerState.isAnimationRunning}")
+                        scope.launch {
+                            try {
+                                drawerState.open()
+                            } catch (e: Exception) {
+                                // 捕获并记录异常，避免崩溃
+                                android.util.Log.e("AppNavigation", "Error opening drawer", e)
+                            }
+                        }
+                    },
                     onShowApiKeyDialog = { showApikeyDialog = true }
                 )
             }
             composable(Routes.SETTINGS_SCREEN) {
-                SettingsScreen(onBack = { navController.popBackStack() })
+                SettingsScreen(onBack = safePopBackStack)
             }
-            composable(Routes.ABOUT_SCREEN) { AboutScreen(onBack = { navController.popBackStack() }) }
+            composable(Routes.ABOUT_SCREEN) { 
+                AboutScreen(onBack = safePopBackStack) 
+            }
             composable(Routes.HISTORY_SCREEN) {
                 HistoryScreen(
-                    onBack = { navController.popBackStack() },
+                    onBack = safePopBackStack,
                     onConversationClick = { conversationId ->
                         navigateToChat(navController, conversationId)
                     }

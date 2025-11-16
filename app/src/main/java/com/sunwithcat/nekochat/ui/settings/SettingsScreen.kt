@@ -47,6 +47,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.activity.compose.BackHandler
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.sunwithcat.nekochat.R
@@ -56,6 +57,11 @@ import com.sunwithcat.nekochat.data.model.AIConfig
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(onBack: () -> Unit) {
+    // 拦截系统返回手势，使用我们的 onBack
+    BackHandler {
+        android.util.Log.d("SettingsScreen", "BackHandler triggered - calling onBack()")
+        onBack()
+    }
     val context = LocalContext.current
     val factory = SettingsViewModelFactory(context)
     val viewModel: SettingsViewModel = viewModel(factory = factory)

@@ -29,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.activity.compose.BackHandler
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sunwithcat.nekochat.data.model.Conversation
 import com.sunwithcat.nekochat.ui.util.DateFormatter
@@ -36,6 +37,8 @@ import com.sunwithcat.nekochat.ui.util.DateFormatter
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistoryScreen(onBack: () -> Unit, onConversationClick: (Long) -> Unit) {
+    // 拦截系统返回手势，使用我们的 onBack
+    BackHandler(onBack = onBack)
     val context = LocalContext.current
     val factory = HistoryViewModelFactory(context)
     val viewModel: HistoryViewModel = viewModel(factory = factory)
