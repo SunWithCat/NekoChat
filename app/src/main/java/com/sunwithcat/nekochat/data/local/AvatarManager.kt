@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.core.net.toUri
 
 class AvatarManager(private val context: Context) {
     private val prefs = context.getSharedPreferences("avatar_prefs", Context.MODE_PRIVATE)
@@ -12,6 +13,19 @@ class AvatarManager(private val context: Context) {
     companion object {
         private const val KEY_USER_AVATAR_URI = "user_avatar_uri"
         private const val KEY_MODEL_AVATAR_URI = "model_avatar_uri"
+    }
+
+    private fun getValidAvatarUri(uriString: String?): String? {
+        if (uriString.isNullOrBlank()) return null
+        return try {
+            contentResolver.openInputStream(uriString.toUri())?.use {
+                // 可以正常打开
+            }
+            uriString
+        } catch (e: Exception) {
+            println("头像路径出错：$e")
+            null
+        }
     }
 
     // 保存 URI 获取永久读取权限
@@ -46,7 +60,8 @@ class AvatarManager(private val context: Context) {
     }
 
     fun getUserAvatarUriString(): String? {
-        return getUriString(KEY_USER_AVATAR_URI)
+        val raw = getUriString(KEY_USER_AVATAR_URI)
+        return getValidAvatarUri(raw)
     }
 
     // AI 头像
@@ -55,6 +70,7 @@ class AvatarManager(private val context: Context) {
     }
 
     fun getModelAvatarUriString(): String? {
-        return getUriString(KEY_MODEL_AVATAR_URI)
+        val raw = getUriString(KEY_MODEL_AVATAR_URI)
+        return getValidAvatarUri(raw)
     }
 }
