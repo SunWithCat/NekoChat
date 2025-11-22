@@ -27,7 +27,8 @@ class ChatRepository(
                     id = entity.id.toString(),
                     content = entity.content,
                     author = Author.valueOf(entity.author),
-                    isProcessing = false
+                    isProcessing = false,
+                    isError = entity.content.startsWith("Error:")
                 )
             }
         }
@@ -51,6 +52,13 @@ class ChatRepository(
             )
         chatMessageDao.insertMessage(userMessageEntity)
         return currentConversationId
+    }
+
+    private fun ChatMessage.toGeminiContent(): Content {
+        return Content(
+            role = if (author == Author.USER) "user" else "model",
+            parts = listOf(Part(text = content))
+        )
     }
 
     suspend fun fetchModelResponse(
@@ -92,15 +100,7 @@ class ChatRepository(
             val historyLines = promptManager.getLength()
             historyForApi = historyForApi.takeLast(historyLines)
 
-            val contents =
-                historyForApi.map { message ->
-                    Content(
-                        role =
-                            if (message.author == Author.USER) "user"
-                            else "model",
-                        parts = listOf(Part(text = message.content))
-                    )
-                }
+            val contents = historyForApi.map { it.toGeminiContent() }
 
             val currentTemperature = promptManager.getTemperature()
             val generationConfig = GenerationConfig(temperature = currentTemperature)
@@ -137,7 +137,28 @@ class ChatRepository(
                     )
                 chatMessageDao.insertMessage(blockedResponseEntity)
             }
+        } catch (e: retrofit2.HttpException) {
+            // 语法解释: catch (e: Type) 用于捕获特定类型的异常。         
+            // 语法解释: when (value) 是 Kotlin 的 switch-case，非常强大。
+            // e.code() 获取 HTTP 状态码。
+            val errorMessage = when (e.code()) {
+                404 -> "Error: 404 Not Found. 喵? 找不到路了..." // 资源不存在
+                503 -> "Error: 503 Service Unavailable. 喵... 服务器累坏了..." // 服务器暂时不可用
+                429 -> "Error: 429 Too Many Requests. 喵! 慢点慢点!" // 请求太频繁
+                else -> "Error: ${e.message()}" // 其他错误，直接显示错误信息
+            }
+            
+            // 创建一个错误消息实体，准备存入数据库
+            val errorMessageEntity =
+                ChatMessageEntity(
+                    conversationId = conversationId,
+                    content = errorMessage,
+                    author = Author.MODEL.name
+                )
+            chatMessageDao.insertMessage(errorMessageEntity)
         } catch (e: Exception) {
+            // 语法解释: 捕获所有其他类型的异常（比如网络断开、解析错误等）。
+            // Exception 是所有异常的父类。
             val errorMessageEntity =
                 ChatMessageEntity(
                     conversationId = conversationId,
@@ -165,5 +186,14 @@ class ChatRepository(
 
     fun getAllConversations(): Flow<List<Conversation>> {
         return chatMessageDao.getAllConversations()
+    }
+
+    suspend fun deleteMessage(messageId: String) {
+        try {
+            chatMessageDao.deleteMessageById(messageId.toLong())
+        } catch (e: NumberFormatException) {
+            println(e)
+            // Ignore if id is not Long (e.g. temporary UUID)
+        }
     }
 }

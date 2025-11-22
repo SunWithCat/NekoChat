@@ -35,4 +35,6 @@ interface ChatMessageDao {
     )
     suspend fun updateConversation(conversationId: Long, title: String, timestamp: Long)
 
+    @Query("DELETE FROM chat_messages WHERE id = :messageId")
+    suspend fun deleteMessageById(messageId: Long)
 }

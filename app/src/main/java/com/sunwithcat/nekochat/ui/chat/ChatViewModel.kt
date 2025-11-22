@@ -103,4 +103,40 @@ class ChatViewModel(private val chatRepository: ChatRepository, private val conv
             viewModelScope.launch { chatRepository.clearChatHistory(_currentConversationId.value) }
         }
     }
+
+    fun retry() {
+        val history = _chatHistory.value
+        if (history.isEmpty()) return
+
+        val lastMessage = history.last()
+
+        // 检查最后一条消息是否是 AI 发出的错误消息
+        if (lastMessage.isError && lastMessage.author == Author.MODEL) {
+            viewModelScope.launch {
+                // 1. 删除错误消息
+                // 调用 Repository 的挂起函数 (suspend function)
+                chatRepository.deleteMessage(lastMessage.id)
+
+                // 2. 找到上一条用户消息重新发送
+                // 语法解释: findLast { ... } 从后往前查找符合条件的元素。
+                // { it.author == Author.USER } 是一个 lambda 表达式，it 代表列表中的每一个元素。
+                val lastUserMessage = history.findLast { it.author == Author.USER }
+
+                if (lastUserMessage != null) {
+                    // 设置状态为正在处理，UI 会显示加载动画
+                    _isModelProcessing.value = true
+                    
+                    // 重新调用获取响应的方法
+                    chatRepository.fetchModelResponse(
+                        lastUserMessage.content,
+                        history,
+                        _currentConversationId.value
+                    )
+                    
+                    // 处理完成，恢复状态
+                    _isModelProcessing.value = false
+                }
+            }
+        }
+    }
 }
