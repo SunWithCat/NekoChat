@@ -81,7 +81,7 @@ import com.sunwithcat.nekochat.ui.AppSessionManager
 @Composable
 fun ChatScreen(
         conversationId: Long,
-        onNavigateToSettings: () -> Unit,
+        onNavigateToSettings: (Long) -> Unit,
         onOpenDrawer: () -> Unit,
         onShowApiKeyDialog: () -> Unit
 ) {
@@ -147,7 +147,7 @@ fun ChatScreen(
                             }
                         },
                         actions = {
-                            IconButton(onClick = onNavigateToSettings) {
+                            IconButton(onClick = {onNavigateToSettings(conversationId)}) {
                                 Icon(
                                         imageVector = Icons.Default.Settings,
                                         contentDescription = "设置",

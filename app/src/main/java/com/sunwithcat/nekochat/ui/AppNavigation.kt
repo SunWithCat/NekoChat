@@ -65,15 +65,21 @@ fun AppNavigation() {
 
     val safePopBackStack: () -> Unit = {
         val currentDestination = navController.currentDestination?.route
-        
+
         // 检查是否还有可以返回的目的地
         when {
             currentDestination == null -> {
-                android.util.Log.w("AppNavigation", "Cannot pop back stack: current destination is null")
+                android.util.Log.w(
+                        "AppNavigation",
+                        "Cannot pop back stack: current destination is null"
+                )
             }
             currentDestination.startsWith("chat") -> {
                 // 检查是否在主屏幕（ChatScreen），如果是则不允许返回
-                android.util.Log.w("AppNavigation", "Cannot pop back stack: already at ChatScreen (root)")
+                android.util.Log.w(
+                        "AppNavigation",
+                        "Cannot pop back stack: already at ChatScreen (root)"
+                )
             }
             else -> {
                 try {
@@ -88,200 +94,179 @@ fun AppNavigation() {
 
     if (showApikeyDialog) {
         ApiKeyInputDialog(
-            onDismiss = {
-                showApikeyDialog = false
-                AppSessionManager.hasShownApiKeyPromptThisSession = true
-            },
-            onConfirm = { apiKey ->
-                val apiKeyManager = ApiKeyManager(context)
-                apiKeyManager.saveApiKey(apiKey)
-                Toast.makeText(context, "人家会好好记住这个秘密的喵~", Toast.LENGTH_SHORT).show()
-                AppSessionManager.hasShownApiKeyPromptThisSession = true
-                showApikeyDialog = false
-            }
+                onDismiss = {
+                    showApikeyDialog = false
+                    AppSessionManager.hasShownApiKeyPromptThisSession = true
+                },
+                onConfirm = { apiKey ->
+                    val apiKeyManager = ApiKeyManager(context)
+                    apiKeyManager.saveApiKey(apiKey)
+                    Toast.makeText(context, "人家会好好记住这个秘密的喵~", Toast.LENGTH_SHORT).show()
+                    AppSessionManager.hasShownApiKeyPromptThisSession = true
+                    showApikeyDialog = false
+                }
         )
     }
 
     ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            ModalDrawerSheet(
-                drawerContainerColor =
-                    MaterialTheme.colorScheme.primaryContainer.copy(0.98f)
-            ) {
-                Column(modifier = Modifier.statusBarsPadding()) {
-                    Column(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "Neko Chat",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            text = "你的专属猫娘助手",
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                }
-                Modifier.padding(horizontal = 16.dp)
-                HorizontalDivider(
-                    thickness = 0.5.dp,
-                    color =
-                        MaterialTheme.colorScheme.onSurface.copy(
-                            alpha = 0.1f
-                        )
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                NavigationDrawerItem(
-                    icon = {
-                        Icon(
-                            Icons.Default.VpnKey,
-                            contentDescription = "设置API Key"
-                        )
-                    },
-                    label = { Text(text = "设置API Key") },
-                    selected = false,
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                        showApikeyDialog = true
-                    },
-                    modifier = Modifier.padding(horizontal = 12.dp)
-                )
-
-                NavigationDrawerItem(
-                    icon = {
-                        Icon(
-                            Icons.Outlined.ChatBubbleOutline,
-                            contentDescription = "新对话"
-                        )
-                    },
-                    label = { Text(text = "开始新对话") },
-                    selected = false,
-                    onClick = {
-                        scope.launch {
-                            drawerState.close()
+            drawerState = drawerState,
+            drawerContent = {
+                ModalDrawerSheet(
+                        drawerContainerColor =
+                                MaterialTheme.colorScheme.primaryContainer.copy(0.98f)
+                ) {
+                    Column(modifier = Modifier.statusBarsPadding()) {
+                        Column(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                    text = "Neko Chat",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    color = MaterialTheme.colorScheme.primary
+                            )
+                            Text(text = "你的专属猫娘助手", style = MaterialTheme.typography.bodySmall)
                         }
-                        navController.navigate(Routes.CHAT_SCREEN)
-                    },
-                    modifier = Modifier.padding(horizontal = 12.dp),
-                    colors =
-                        NavigationDrawerItemDefaults.colors(
-                            unselectedContainerColor =
-                                Color.Transparent,
-                            selectedContainerColor =
-                                MaterialTheme.colorScheme.primary
-                                    .copy(alpha = 0.2f)
-                        )
-                )
-                NavigationDrawerItem(
-                    icon = {
-                        Icon(
-                            Icons.Outlined.History,
-                            contentDescription = "历史记录"
-                        )
-                    },
-                    label = { Text(text = "历史记录") },
-                    selected = false,
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                        navController.navigate(Routes.HISTORY_SCREEN)
-                    },
-                    modifier = Modifier.padding(horizontal = 12.dp),
-                    colors =
-                        NavigationDrawerItemDefaults.colors(
-                            unselectedContainerColor =
-                                Color.Transparent,
-                            selectedContainerColor =
-                                MaterialTheme.colorScheme.primary
-                                    .copy(alpha = 0.2f)
-                        )
-                )
-                Spacer(modifier = Modifier.weight(1f))
-                HorizontalDivider(
-                    thickness = 0.5.dp,
-                    color =
-                        MaterialTheme.colorScheme.onSurface.copy(
-                            alpha = 0.1f
-                        )
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                NavigationDrawerItem(
-                    icon = {
-                        Icon(Icons.Outlined.Info, contentDescription = "关于")
-                    },
-                    label = { Text(text = "关于 NekoChat") },
-                    selected = false,
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                        navController.navigate(Routes.ABOUT_SCREEN)
-                    },
-                    modifier = Modifier.padding(horizontal = 12.dp)
-                )
-                Spacer(modifier = Modifier.height(16.dp))
+                    }
+                    Modifier.padding(horizontal = 16.dp)
+                    HorizontalDivider(
+                            thickness = 0.5.dp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    NavigationDrawerItem(
+                            icon = { Icon(Icons.Default.VpnKey, contentDescription = "设置API Key") },
+                            label = { Text(text = "设置API Key") },
+                            selected = false,
+                            onClick = {
+                                scope.launch { drawerState.close() }
+                                showApikeyDialog = true
+                            },
+                            modifier = Modifier.padding(horizontal = 12.dp)
+                    )
+
+                    NavigationDrawerItem(
+                            icon = {
+                                Icon(Icons.Outlined.ChatBubbleOutline, contentDescription = "新对话")
+                            },
+                            label = { Text(text = "开始新对话") },
+                            selected = false,
+                            onClick = {
+                                scope.launch { drawerState.close() }
+                                navController.navigate(Routes.CHAT_SCREEN)
+                            },
+                            modifier = Modifier.padding(horizontal = 12.dp),
+                            colors =
+                                    NavigationDrawerItemDefaults.colors(
+                                            unselectedContainerColor = Color.Transparent,
+                                            selectedContainerColor =
+                                                    MaterialTheme.colorScheme.primary.copy(
+                                                            alpha = 0.2f
+                                                    )
+                                    )
+                    )
+                    NavigationDrawerItem(
+                            icon = { Icon(Icons.Outlined.History, contentDescription = "历史记录") },
+                            label = { Text(text = "历史记录") },
+                            selected = false,
+                            onClick = {
+                                scope.launch { drawerState.close() }
+                                navController.navigate(Routes.HISTORY_SCREEN)
+                            },
+                            modifier = Modifier.padding(horizontal = 12.dp),
+                            colors =
+                                    NavigationDrawerItemDefaults.colors(
+                                            unselectedContainerColor = Color.Transparent,
+                                            selectedContainerColor =
+                                                    MaterialTheme.colorScheme.primary.copy(
+                                                            alpha = 0.2f
+                                                    )
+                                    )
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    HorizontalDivider(
+                            thickness = 0.5.dp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    NavigationDrawerItem(
+                            icon = { Icon(Icons.Outlined.Info, contentDescription = "关于") },
+                            label = { Text(text = "关于 NekoChat") },
+                            selected = false,
+                            onClick = {
+                                scope.launch { drawerState.close() }
+                                navController.navigate(Routes.ABOUT_SCREEN)
+                            },
+                            modifier = Modifier.padding(horizontal = 12.dp)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
             }
-        }
     ) {
         NavHost(navController = navController, startDestination = Routes.CHAT_SCREEN) {
             composable(
-                route = "${Routes.CHAT_SCREEN}?conversationId={conversationId}",
-                arguments = listOf(
-                    navArgument("conversationId") {
-                        type = NavType.LongType
-                        defaultValue = -1L
-                    }
-                )
+                    route = "${Routes.CHAT_SCREEN}?conversationId={conversationId}",
+                    arguments =
+                            listOf(
+                                    navArgument("conversationId") {
+                                        type = NavType.LongType
+                                        defaultValue = -1L
+                                    }
+                            )
             ) { backStackEntry ->
                 val conversationId = backStackEntry.arguments?.getLong("conversationId") ?: -1L
                 ChatScreen(
-                    conversationId = conversationId,
-                    onNavigateToSettings = { navController.navigate(Routes.SETTINGS_SCREEN) },
-                    onOpenDrawer = {
-                        // 使用更安全的方式打开 drawer
-                        android.util.Log.d("AppNavigation", "onOpenDrawer called, drawerState: isClosed=${drawerState.isClosed}, isAnimationRunning=${drawerState.isAnimationRunning}")
-                        scope.launch {
-                            try {
-                                drawerState.open()
-                            } catch (e: Exception) {
-                                // 捕获并记录异常，避免崩溃
-                                android.util.Log.e("AppNavigation", "Error opening drawer", e)
+                        conversationId = conversationId,
+                        onNavigateToSettings = { id ->
+                            navController.navigate("${Routes.SETTINGS_SCREEN}?conversationId=$id")
+                        },
+                        onOpenDrawer = {
+                            // 使用更安全的方式打开 drawer
+                            android.util.Log.d(
+                                    "AppNavigation",
+                                    "onOpenDrawer called, drawerState: isClosed=${drawerState.isClosed}, isAnimationRunning=${drawerState.isAnimationRunning}"
+                            )
+                            scope.launch {
+                                try {
+                                    drawerState.open()
+                                } catch (e: Exception) {
+                                    // 捕获并记录异常，避免崩溃
+                                    android.util.Log.e("AppNavigation", "Error opening drawer", e)
+                                }
                             }
-                        }
-                    },
-                    onShowApiKeyDialog = { showApikeyDialog = true }
+                        },
+                        onShowApiKeyDialog = { showApikeyDialog = true }
                 )
             }
-            composable(Routes.SETTINGS_SCREEN) {
-                SettingsScreen(onBack = safePopBackStack)
+            composable(
+                    route = "${Routes.SETTINGS_SCREEN}?conversationId={conversationId}",
+                    arguments =
+                            listOf(
+                                    navArgument("conversationId") {
+                                        type = NavType.LongType
+                                        defaultValue = -1L
+                                    }
+                            )
+            ) { backStackEntry ->
+                val conversationId = backStackEntry.arguments?.getLong("conversationId") ?: -1L
+                SettingsScreen(onBack = safePopBackStack, conversationId = conversationId)
             }
-            composable(Routes.ABOUT_SCREEN) { 
-                AboutScreen(onBack = safePopBackStack) 
-            }
+            composable(Routes.ABOUT_SCREEN) { AboutScreen(onBack = safePopBackStack) }
             composable(Routes.HISTORY_SCREEN) {
                 HistoryScreen(
-                    onBack = safePopBackStack,
-                    onConversationClick = { conversationId ->
-                        navigateToChat(navController, conversationId)
-                    }
+                        onBack = safePopBackStack,
+                        onConversationClick = { conversationId ->
+                            navigateToChat(navController, conversationId)
+                        }
                 )
             }
         }
     }
-
-
 }
 
 fun navigateToChat(navController: NavController, conversationId: Long = -1L) {
     val route = "${Routes.CHAT_SCREEN}?conversationId=$conversationId"
-    navController.navigate(route) {
-        popUpTo(navController.graph.id) {
-            inclusive = true
-        }
-    }
+    navController.navigate(route) { popUpTo(navController.graph.id) { inclusive = true } }
 }
