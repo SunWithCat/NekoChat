@@ -147,7 +147,7 @@ fun ChatScreen(
                             }
                         },
                         actions = {
-                            IconButton(onClick = {onNavigateToSettings(conversationId)}) {
+                            IconButton(onClick = { onNavigateToSettings(conversationId) }) {
                                 Icon(
                                         imageVector = Icons.Default.Settings,
                                         contentDescription = "设置",
@@ -368,12 +368,22 @@ fun ChatMessageItem(
                         modifier = Modifier.animateContentSize() // 内容变化时的平滑动画
                 ) {
                     SelectionContainer {
-                        Text(
-                                text = message.content,
-                                color = contentColor,
-                                style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
-                        )
+                        // 如果处理中就显示动画
+                        if (message.isProcessing) {
+                            TypingIndicator(
+                                    modifier =
+                                            Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+                                    dotColor = contentColor
+                            )
+                        } else {
+                            Text(
+                                    text = message.content,
+                                    color = contentColor,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    modifier =
+                                            Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+                            )
+                        }
                     }
                 }
 
