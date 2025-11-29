@@ -41,4 +41,7 @@ interface ChatMessageDao {
 
     @Query("UPDATE conversations SET customSystemPrompt = :prompt, customTemperature = :temp, customHistoryLength = :length WHERE id = :id")
     suspend fun updateConversationConfig(id: Long, prompt: String?, temp: Float?, length: Int?)
+
+    @Query("UPDATE conversations SET title = :title WHERE id = :conversationId")
+    suspend fun updateConversationTitle(conversationId: Long, title: String)
 }

@@ -1,7 +1,9 @@
 package com.sunwithcat.nekochat.ui.history
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -9,12 +11,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -29,7 +33,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.activity.compose.BackHandler
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sunwithcat.nekochat.data.model.Conversation
 import com.sunwithcat.nekochat.ui.util.DateFormatter
@@ -84,7 +87,10 @@ fun HistoryScreen(onBack: () -> Unit, onConversationClick: (Long) -> Unit) {
                     ConversationItem(
                         conversation = conversation,
                         onClick = { onConversationClick(conversation.id) },
-                        onDeleteClick = { viewModel.deleteConversation(conversation.id) }
+                        onDeleteClick = { viewModel.deleteConversation(conversation.id) },
+                        onRenameClick = { newTitle ->
+                            viewModel.updateTitle(conversation.id, newTitle)
+                        }
                     )
                 }
             }
@@ -93,8 +99,16 @@ fun HistoryScreen(onBack: () -> Unit, onConversationClick: (Long) -> Unit) {
 }
 
 @Composable
-fun ConversationItem(conversation: Conversation, onClick: () -> Unit, onDeleteClick: () -> Unit) {
+fun ConversationItem(
+    conversation: Conversation,
+    onClick: () -> Unit,
+    onDeleteClick: () -> Unit,
+    onRenameClick: (String) -> Unit
+) {
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showRenameDialog by remember { mutableStateOf(false) }
+    var newTitle by remember { mutableStateOf(conversation.title) }
+
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
@@ -121,20 +135,68 @@ fun ConversationItem(conversation: Conversation, onClick: () -> Unit, onDeleteCl
             }
         )
     }
+
+    if (showRenameDialog) {
+        AlertDialog(
+            onDismissRequest = { showRenameDialog = false },
+            title = { Text("重命名对话") },
+            text = {
+                OutlinedTextField(
+                    value = newTitle,
+                    onValueChange = { newTitle = it },
+                    label = { Text("新标题") },
+                    singleLine = true
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onRenameClick(newTitle)
+                        showRenameDialog = false
+                    }
+                ) {
+                    Text("确认")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showRenameDialog = false
+                    }
+                ) {
+                    Text("取消")
+                }
+            }
+        )
+    }
+
     ListItem(
         headlineContent = { Text(conversation.title, maxLines = 1) },
         supportingContent = {
             Text(DateFormatter.formatTimestamp(conversation.lastMessageTimestamp))
         },
         trailingContent = {
-            IconButton(onClick = {
-                showDeleteDialog = true
-            }) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "删除对话",
-                    tint = MaterialTheme.colorScheme.primary
-                )
+            Row {
+                IconButton(
+                    onClick = {
+                        showRenameDialog = true
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "重命名",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+                IconButton(onClick = {
+                    showDeleteDialog = true
+                }) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "删除对话",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
             }
         },
         modifier = Modifier.clickable(onClick = onClick)

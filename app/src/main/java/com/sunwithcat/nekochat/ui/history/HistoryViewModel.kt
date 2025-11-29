@@ -23,4 +23,10 @@ class HistoryViewModel(private val chatRepository: ChatRepository) : ViewModel()
         viewModelScope.launch { chatRepository.deleteConversation(conversationId) }
     }
 
+    fun updateTitle(conversationId: Long, newTitle: String) {
+        viewModelScope.launch {
+            chatRepository.updateConversationTitle(conversationId, newTitle)
+        }
+    }
+
 }

@@ -188,4 +188,8 @@ class ChatRepository(
             // Ignore if id is not Long (e.g. temporary UUID)
         }
     }
+
+    suspend fun updateConversationTitle(conversationId: Long, newTitle: String) {
+        chatMessageDao.updateConversationTitle(conversationId, newTitle)
+    }
 }
