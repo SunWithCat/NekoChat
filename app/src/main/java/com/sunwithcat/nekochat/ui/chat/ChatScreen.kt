@@ -31,6 +31,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Refresh
@@ -46,6 +47,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -54,9 +56,11 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -75,6 +79,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.mikepenz.markdown.m3.Markdown
+import com.mikepenz.markdown.m3.markdownColor
+import com.mikepenz.markdown.m3.markdownTypography
 import com.sunwithcat.nekochat.R
 import com.sunwithcat.nekochat.data.local.ApiKeyManager
 import com.sunwithcat.nekochat.data.local.AvatarManager
@@ -128,6 +135,14 @@ fun ChatScreen(
 
     // 获取 LazyColumn 的滚动状态
     val lazyListState = rememberLazyListState()
+
+    val showScrollToBottom by remember {
+        derivedStateOf {
+            lazyListState.canScrollForward
+        }
+    }
+
+    val scope = rememberCoroutineScope() // 启动滚动协程
 
     // 当消息列表更新时，滚动到最新消息
     LaunchedEffect(messages.size) {
@@ -192,10 +207,12 @@ fun ChatScreen(
                 }
             )
         }
-        Column(modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)
-            .imePadding()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .imePadding()
+        ) {
             // 获取焦点管理器，用于清除焦点和文本选择
             val focusManager = LocalFocusManager.current
 
@@ -236,6 +253,26 @@ fun ChatScreen(
                                 onRetry = { viewModel.retry() }
                             )
                         }
+                    }
+                if (showScrollToBottom)
+                    SmallFloatingActionButton(
+                        onClick = {
+                            scope.launch {
+                                if (messages.isNotEmpty()) {
+                                    lazyListState.animateScrollToItem(messages.lastIndex)
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(16.dp),
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    ) {
+                        Icon(
+                            Icons.Default.ArrowDownward,
+                            contentDescription = "Scroll to bottom"
+                        )
                     }
             }
 
@@ -414,13 +451,29 @@ fun ChatMessageItem(
                                 dotColor = contentColor
                             )
                         } else {
-                            Text(
-                                text = message.content,
-                                color = contentColor,
-                                style = MaterialTheme.typography.bodyLarge,
-                                modifier =
-                                    Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
-                            )
+                                Markdown(
+                                    content = message.content,
+                                    modifier = Modifier.padding(
+                                        horizontal = 16.dp,
+                                        vertical = 10.dp
+                                    ),
+                                    colors = markdownColor(
+                                        text = contentColor,
+                                        codeText = contentColor,
+                                        linkText = contentColor
+                                    ),
+                                    typography = markdownTypography(
+                                        text = MaterialTheme.typography.bodyLarge.copy(color = contentColor),
+                                        code = MaterialTheme.typography.bodyMedium.copy(color = contentColor)
+                                    )
+                                )
+//                            Text(
+//                                text = message.content,
+//                                color = contentColor,
+//                                style = MaterialTheme.typography.bodyLarge,
+//                                modifier =
+//                                    Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+//                            )
                         }
                     }
                 }

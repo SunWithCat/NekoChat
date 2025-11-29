@@ -116,4 +116,8 @@ dependencies {
     // Coil for image loading
     implementation("io.coil-kt:coil-compose:2.6.0")
 
+    // Markdown 渲染 (支持 Material 3)
+    // 尝试使用 0.13.0 版本
+    implementation("com.mikepenz:multiplatform-markdown-renderer-m3:0.13.0")
+
 }
