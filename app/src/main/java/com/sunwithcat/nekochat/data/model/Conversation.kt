@@ -10,5 +10,6 @@ data class Conversation(
         val lastMessageTimestamp: Long, // 最后一条消息时间戳
         val customSystemPrompt: String? = null, // 自定义提示词 (为空则使用全局配置)
         val customTemperature: Float? = null, // 自定义温度 (为空则使用全局配置)
-        val customHistoryLength: Int? = null // 自定义历史长度 (为空则使用全局配置)
+        val customHistoryLength: Int? = null, // 自定义历史长度 (为空则使用全局配置)
+        val isCustomTitle: Boolean = false // 是否为自定义标题
 )
