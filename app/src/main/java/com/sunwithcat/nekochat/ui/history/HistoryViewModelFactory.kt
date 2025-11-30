@@ -14,7 +14,7 @@ class HistoryViewModelFactory(private val context: Context) : ViewModelProvider.
             val dao = AppDatabase.getInstance(context).chatMessageDao()
             val promptManager = PromptManager(context.applicationContext)
             val apiKeyManager = ApiKeyManager(context.applicationContext)
-            val repository = ChatRepository(dao, promptManager, apiKeyManager)
+            val repository = ChatRepository(dao, promptManager, apiKeyManager, context.applicationContext)
 
             @Suppress("UNCHECKED_CAST")
             return HistoryViewModel(repository) as T

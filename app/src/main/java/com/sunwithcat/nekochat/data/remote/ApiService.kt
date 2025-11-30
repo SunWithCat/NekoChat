@@ -22,8 +22,11 @@ data class Content(
     val role: String // 区分角色
 )
 
-data class Part(
-    val text: String
+data class Part(val text: String? = null, val inlineData: InlineData? = null)
+
+data class InlineData(
+    val mimeType: String, // 图片类型
+    val data: String // 图片内容（经过 Base64 编码的字符串）
 )
 
 // AI返回的数据结构
@@ -31,10 +34,7 @@ data class GeminiResponse(
     val candidates: List<Candidate>,
 )
 
-data class Candidate(
-    val content: Content
-)
-
+data class Candidate(val content: Content)
 
 interface ApiService {
     @POST("v1beta/models/gemini-2.5-flash:generateContent")

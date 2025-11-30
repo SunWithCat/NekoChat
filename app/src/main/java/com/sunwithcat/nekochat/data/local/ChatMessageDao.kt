@@ -10,44 +10,59 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ChatMessageDao {
 
-    @Insert suspend fun insertMessage(message: ChatMessageEntity)
+        @Insert suspend fun insertMessage(message: ChatMessageEntity): Long
 
-    @Query(
-            "SELECT * FROM chat_messages WHERE conversationId = :conversationId ORDER BY timestamp ASC"
-    )
-    fun getMessagesForConversation(conversationId: Long): Flow<List<ChatMessageEntity>>
+        @Query(
+                "SELECT * FROM chat_messages WHERE conversationId = :conversationId ORDER BY timestamp ASC"
+        )
+        fun getMessagesForConversation(conversationId: Long): Flow<List<ChatMessageEntity>>
 
-    @Query("DELETE FROM chat_messages WHERE conversationId = :conversationId")
-    suspend fun clearMessagesForConversation(conversationId: Long)
+        @Query("DELETE FROM chat_messages WHERE conversationId = :conversationId")
+        suspend fun clearMessagesForConversation(conversationId: Long)
 
-    @Query("DELETE FROM conversations WHERE id = :conversationId")
-    suspend fun deleteConversation(conversationId: Long)
+        @Query("DELETE FROM conversations WHERE id = :conversationId")
+        suspend fun deleteConversation(conversationId: Long)
 
-    @Insert suspend fun insertConversation(conversation: Conversation): Long
+        @Insert suspend fun insertConversation(conversation: Conversation): Long
 
-    @Query("SELECT * FROM conversations ORDER BY lastMessageTimestamp DESC")
-    fun getAllConversations(): Flow<List<Conversation>>
+        @Query("SELECT * FROM conversations ORDER BY lastMessageTimestamp DESC")
+        fun getAllConversations(): Flow<List<Conversation>>
 
-    @Query(
-            "UPDATE conversations SET title = :title, lastMessageTimestamp = :timestamp WHERE id = :conversationId"
-    )
-    suspend fun updateConversation(conversationId: Long, title: String, timestamp: Long)
+        @Query(
+                "UPDATE conversations SET title = :title, lastMessageTimestamp = :timestamp WHERE id = :conversationId"
+        )
+        suspend fun updateConversation(conversationId: Long, title: String, timestamp: Long)
 
-    @Query("DELETE FROM chat_messages WHERE id = :messageId")
-    suspend fun deleteMessageById(messageId: Long)
+        @Query("DELETE FROM chat_messages WHERE id = :messageId")
+        suspend fun deleteMessageById(messageId: Long)
 
-    @Query("SELECT * FROM conversations WHERE id = :conversationId")
-    suspend fun getConversationById(conversationId: Long): Conversation?
+        @Query("SELECT * FROM conversations WHERE id = :conversationId")
+        suspend fun getConversationById(conversationId: Long): Conversation?
 
-    @Query("UPDATE conversations SET customSystemPrompt = :prompt, customTemperature = :temp, customHistoryLength = :length WHERE id = :id")
-    suspend fun updateConversationConfig(id: Long, prompt: String?, temp: Float?, length: Int?)
+        @Query(
+                "UPDATE conversations SET customSystemPrompt = :prompt, customTemperature = :temp, customHistoryLength = :length WHERE id = :id"
+        )
+        suspend fun updateConversationConfig(id: Long, prompt: String?, temp: Float?, length: Int?)
 
-    @Query("UPDATE conversations SET title = :title, isCustomTitle = 1 WHERE id = :conversationId")
-    suspend fun updateConversationTitle(conversationId: Long, title: String)
+        @Query(
+                "UPDATE conversations SET title = :title, isCustomTitle = 1 WHERE id = :conversationId"
+        )
+        suspend fun updateConversationTitle(conversationId: Long, title: String)
 
-    @Query("UPDATE conversations SET lastMessageTimestamp = :timestamp WHERE id = :conversationId")
-    suspend fun updateConversationTimestamp(conversationId: Long, timestamp: Long)
+        @Query(
+                "UPDATE conversations SET lastMessageTimestamp = :timestamp WHERE id = :conversationId"
+        )
+        suspend fun updateConversationTimestamp(conversationId: Long, timestamp: Long)
 
-    @Query("UPDATE conversations SET title = :title, lastMessageTimestamp = :timestamp WHERE id = :conversationId AND isCustomTitle = 0")
-    suspend fun updateConversationTitleIfAuto(conversationId: Long, title: String, timestamp: Long)
+        @Query(
+                "UPDATE conversations SET title = :title, lastMessageTimestamp = :timestamp WHERE id = :conversationId AND isCustomTitle = 0"
+        )
+        suspend fun updateConversationTitleIfAuto(
+                conversationId: Long,
+                title: String,
+                timestamp: Long
+        )
+
+        @Query("UPDATE chat_messages SET imagePath = :imagePath WHERE id = :messageId")
+        suspend fun updateMessageImage(messageId: Long, imagePath: String)
 }

@@ -2,6 +2,9 @@
 
 package com.sunwithcat.nekochat.ui.chat
 
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.EaseOutQuad
@@ -18,6 +21,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -33,6 +37,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
@@ -90,6 +95,7 @@ import com.sunwithcat.nekochat.data.model.ChatMessage
 import com.sunwithcat.nekochat.ui.AppSessionManager
 import kotlinx.coroutines.launch
 
+@RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
 @Composable
 fun ChatScreen(
     conversationId: Long,
@@ -121,6 +127,16 @@ fun ChatScreen(
     // 是否显示删除弹窗
     var showDeleteDialog by remember { mutableStateOf(false) }
 
+    // 图片选择相关
+    var selectedImageUri by remember { mutableStateOf<android.net.Uri?>(null) }
+    val photoPickerLauncher =
+        rememberLauncherForActivityResult(
+            contract =
+                androidx.activity.result.contract.ActivityResultContracts
+                    .PickVisualMedia(),
+            onResult = { uri -> selectedImageUri = uri }
+        )
+
     // 首次进入检查 API 密钥是否为空
     LaunchedEffect(conversationId) {
         if (conversationId == -1L) {
@@ -136,11 +152,7 @@ fun ChatScreen(
     // 获取 LazyColumn 的滚动状态
     val lazyListState = rememberLazyListState()
 
-    val showScrollToBottom by remember {
-        derivedStateOf {
-            lazyListState.canScrollForward
-        }
-    }
+    val showScrollToBottom by remember { derivedStateOf { lazyListState.canScrollForward } }
 
     val scope = rememberCoroutineScope() // 启动滚动协程
 
@@ -207,12 +219,10 @@ fun ChatScreen(
                 }
             )
         }
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .imePadding()
-        ) {
+        Column(modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)
+            .imePadding()) {
             // 获取焦点管理器，用于清除焦点和文本选择
             val focusManager = LocalFocusManager.current
 
@@ -285,10 +295,22 @@ fun ChatScreen(
                     value = userInput,
                     onValueChange = { userInput = it },
                     onSendClick = {
-                        viewModel.sendMessage(userInput)
+                        viewModel.sendMessage(userInput, selectedImageUri)
                         userInput = "" // 发送后清空输入框
+                        selectedImageUri = null // 发送后清空图片
                     },
-                    isSendingEnabled = !uiState.isModelProcessing // 模型处理时禁用发送按钮
+                    onImageClick = {
+                        photoPickerLauncher.launch(
+                            androidx.activity.result.PickVisualMediaRequest(
+                                androidx.activity.result.contract
+                                    .ActivityResultContracts.PickVisualMedia
+                                    .ImageOnly
+                            )
+                        )
+                    },
+                    isSendingEnabled = !uiState.isModelProcessing, // 模型处理时禁用发送按钮
+                    selectedImageUri = selectedImageUri,
+                    onRemoveImage = { selectedImageUri = null }
                 )
                 Text(
                     text = "Based on Google Gemini-2.5-Flash",
@@ -352,12 +374,7 @@ fun ChatMessageItem(
     val offsetY = remember { Animatable(50f) }
 
     LaunchedEffect(Unit) {
-        launch {
-            alpha.animateTo(
-                targetValue = 1f,
-                animationSpec = tween(durationMillis = 300)
-            )
-        }
+        launch { alpha.animateTo(targetValue = 1f, animationSpec = tween(durationMillis = 300)) }
         launch {
             offsetY.animateTo(
                 targetValue = 0f,
@@ -365,7 +382,6 @@ fun ChatMessageItem(
             )
         }
     }
-
 
     val isModel = message.author == Author.MODEL
 
@@ -396,13 +412,14 @@ fun ChatMessageItem(
         else MaterialTheme.colorScheme.onPrimary
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp) // 增加一点呼吸感
-            .graphicsLayer {
-                this.alpha = alpha.value
-                this.translationY = offsetY.value
-            },
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp) // 增加一点呼吸感
+                .graphicsLayer {
+                    this.alpha = alpha.value
+                    this.translationY = offsetY.value
+                },
         verticalAlignment = Alignment.Bottom,
         horizontalArrangement = if (isModel) Arrangement.Start else Arrangement.End
     ) {
@@ -443,37 +460,61 @@ fun ChatMessageItem(
                     modifier = Modifier.animateContentSize() // 内容变化时的平滑动画
                 ) {
                     SelectionContainer {
-                        // 如果处理中就显示动画
-                        if (message.isProcessing) {
-                            TypingIndicator(
-                                modifier =
-                                    Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
-                                dotColor = contentColor
-                            )
-                        } else {
-                                Markdown(
-                                    content = message.content,
-                                    modifier = Modifier.padding(
-                                        horizontal = 16.dp,
-                                        vertical = 10.dp
-                                    ),
-                                    colors = markdownColor(
-                                        text = contentColor,
-                                        codeText = contentColor,
-                                        linkText = contentColor
-                                    ),
-                                    typography = markdownTypography(
-                                        text = MaterialTheme.typography.bodyLarge.copy(color = contentColor),
-                                        code = MaterialTheme.typography.bodyMedium.copy(color = contentColor)
-                                    )
+                        Column {
+                            if (message.imagePath != null) {
+                                AsyncImage(
+                                    model = message.imagePath,
+                                    contentDescription = "Sent Image",
+                                    modifier =
+                                        Modifier
+                                            .padding(8.dp)
+                                            .fillMaxWidth()
+                                            .heightIn(max = 300.dp)
+                                            .clip(RoundedCornerShape(8.dp)),
+                                    contentScale = ContentScale.Crop
                                 )
-//                            Text(
-//                                text = message.content,
-//                                color = contentColor,
-//                                style = MaterialTheme.typography.bodyLarge,
-//                                modifier =
-//                                    Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
-//                            )
+                            }
+                            // 如果处理中就显示动画
+                            if (message.isProcessing) {
+                                TypingIndicator(
+                                    modifier =
+                                        Modifier.padding(
+                                            horizontal = 16.dp,
+                                            vertical = 16.dp
+                                        ),
+                                    dotColor = contentColor
+                                )
+                            } else {
+                                if (message.content.isNotBlank()) {
+                                    Markdown(
+                                        content = message.content,
+                                        modifier =
+                                            Modifier.padding(
+                                                horizontal = 16.dp,
+                                                vertical = 10.dp
+                                            ),
+                                        colors =
+                                            markdownColor(
+                                                text = contentColor,
+                                                codeText = contentColor,
+                                                linkText = contentColor
+                                            ),
+                                        typography =
+                                            markdownTypography(
+                                                text =
+                                                    MaterialTheme.typography
+                                                        .bodyLarge.copy(
+                                                            color = contentColor
+                                                        ),
+                                                code =
+                                                    MaterialTheme.typography
+                                                        .bodyMedium.copy(
+                                                            color = contentColor
+                                                        )
+                                            )
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -534,41 +575,96 @@ fun MessageInput(
     value: String,
     onValueChange: (String) -> Unit,
     onSendClick: () -> Unit,
-    isSendingEnabled: Boolean
+    onImageClick: () -> Unit,
+    isSendingEnabled: Boolean,
+    selectedImageUri: android.net.Uri? = null,
+    onRemoveImage: () -> Unit = {}
 ) {
-    Row(
+    Column(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 2.dp),
-        verticalAlignment = Alignment.CenterVertically
+                .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 2.dp)
     ) {
-        TextField(
-            value = value,
-            onValueChange = onValueChange,
-            modifier = Modifier.weight(1f),
-            shape = RoundedCornerShape(24.dp),
-            placeholder = @Composable { Text("与猫娘小苍进行对话") },
-            colors =
-                TextFieldDefaults.colors(
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    disabledIndicatorColor = Color.Transparent
+        // 图片预览区域
+        if (selectedImageUri != null) {
+            Box(
+                modifier =
+                    Modifier
+                        .padding(bottom = 8.dp)
+                        .size(100.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .border(
+                            1.dp,
+                            MaterialTheme.colorScheme.outlineVariant,
+                            RoundedCornerShape(12.dp)
+                        )
+            ) {
+                AsyncImage(
+                    model = selectedImageUri,
+                    contentDescription = "Selected Image",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
                 )
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Button(
-            onClick = onSendClick,
-            enabled = isSendingEnabled,
-            modifier = Modifier
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary)
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = "Send",
-                tint = MaterialTheme.colorScheme.onPrimary
+                // 删除按钮
+                IconButton(
+                    onClick = onRemoveImage,
+                    modifier =
+                        Modifier
+                            .align(Alignment.TopEnd)
+                            .size(24.dp)
+                            .background(Color.Black.copy(alpha = 0.5f), CircleShape)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Remove Image",
+                        tint = Color.White,
+                        modifier = Modifier.padding(4.dp)
+                    )
+                }
+            }
+        }
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            // 图片选择按钮
+            IconButton(onClick = onImageClick, enabled = isSendingEnabled) {
+                Icon(
+                    imageVector = Icons.Default.Image, // 需要确保导入 Image 图标
+                    contentDescription = "Select Image",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            Spacer(modifier = Modifier.width(4.dp))
+
+            TextField(
+                value = value,
+                onValueChange = onValueChange,
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(24.dp),
+                placeholder = @Composable { Text("与猫娘小苍进行对话") },
+                colors =
+                    TextFieldDefaults.colors(
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        disabledIndicatorColor = Color.Transparent
+                    )
             )
+            Spacer(modifier = Modifier.width(8.dp))
+            Button(
+                onClick = onSendClick,
+                enabled = isSendingEnabled,
+                modifier =
+                    Modifier
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = "Send",
+                    tint = MaterialTheme.colorScheme.onPrimary
+                )
+            }
         }
     }
 }

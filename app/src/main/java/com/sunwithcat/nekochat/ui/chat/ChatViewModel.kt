@@ -1,5 +1,7 @@
 package com.sunwithcat.nekochat.ui.chat
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sunwithcat.nekochat.data.model.Author
@@ -17,7 +19,7 @@ import java.util.UUID
 
 data class ChatUiState(val isModelProcessing: Boolean = false)
 
-class ChatViewModel(private val chatRepository: ChatRepository, private val conversationId: Long) :
+class ChatViewModel(private val chatRepository: ChatRepository, conversationId: Long) :
     ViewModel() {
 
     private val _currentConversationId = MutableStateFlow(conversationId)
@@ -78,21 +80,48 @@ class ChatViewModel(private val chatRepository: ChatRepository, private val conv
             )
 
     // 简化的 sendMessage 方法
-    fun sendMessage(userInput: String) {
-        if (_isModelProcessing.value || userInput.isBlank()) {
+    @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    fun sendMessage(userInput: String, imageUri: android.net.Uri? = null) {
+        if (_isModelProcessing.value || (userInput.isBlank() && imageUri == null)) {
             return
         }
 
         viewModelScope.launch {
-            val conversationId =
-                chatRepository.saveUserMessage(userInput, _currentConversationId.value)
+            _isModelProcessing.value = true
+
+            // 如果有图片，先保存原始 Uri，让 UI 立即显示
+            val initialImagePath = imageUri?.toString()
+            val (conversationId, messageId) =
+                chatRepository.saveUserMessage(
+                    userInput,
+                    _currentConversationId.value,
+                    initialImagePath
+                )
+
             if (_currentConversationId.value == -1L) {
                 _currentConversationId.value = conversationId
             }
 
-            _isModelProcessing.value = true
+            var finalBase64: String? = null
+            var finalMimeType: String? = null
 
-            chatRepository.fetchModelResponse(userInput, _chatHistory.value, conversationId)
+            if (imageUri != null) {
+                val (localPath, base64, mimeType) = chatRepository.processImage(imageUri)
+                finalBase64 = base64
+                finalMimeType = mimeType
+
+                if (localPath != null) {
+                    chatRepository.updateMessageImage(messageId, localPath)
+                }
+            }
+
+            chatRepository.fetchModelResponse(
+                userInput,
+                _chatHistory.value,
+                conversationId,
+                finalBase64,
+                finalMimeType
+            )
 
             _isModelProcessing.value = false
         }
@@ -104,6 +133,7 @@ class ChatViewModel(private val chatRepository: ChatRepository, private val conv
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
     fun retry() {
         val history = _chatHistory.value
         if (history.isEmpty()) return
@@ -125,14 +155,14 @@ class ChatViewModel(private val chatRepository: ChatRepository, private val conv
                 if (lastUserMessage != null) {
                     // 设置状态为正在处理，UI 会显示加载动画
                     _isModelProcessing.value = true
-                    
+
                     // 重新调用获取响应的方法
                     chatRepository.fetchModelResponse(
                         lastUserMessage.content,
                         history,
                         _currentConversationId.value
                     )
-                    
+
                     // 处理完成，恢复状态
                     _isModelProcessing.value = false
                 }

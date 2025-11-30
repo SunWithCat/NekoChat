@@ -14,5 +14,6 @@ data class ChatMessage(
     val content: String, // 消息内容
     val author: Author, // 消息作者 用户 or AI
     val isProcessing: Boolean = false, // 是否正在处理中
-    val isError: Boolean = false // 是否是错误消息
+    val isError: Boolean = false, // 是否是错误消息
+    val imagePath: String? = null
 )

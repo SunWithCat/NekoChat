@@ -11,5 +11,6 @@ data class ChatMessageEntity(
     val conversationId: Long, // 标识属于哪次对话
     val content: String,
     val author: String, // 将 Author 枚举类型改为 String 类型，方便存储
-    val timestamp: Long = System.currentTimeMillis() // 新增时间戳，用于排序
+    val timestamp: Long = System.currentTimeMillis(), // 新增时间戳，用于排序
+    val imagePath: String? = null // 图片本地路径
 )
