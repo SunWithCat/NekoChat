@@ -211,11 +211,10 @@ class ChatRepository(
                 )
             chatMessageDao.insertMessage(errorMessageEntity)
         } finally {
-            chatMessageDao.updateConversationTitleIfAuto(
-                conversationId,
-                userInput,
-                System.currentTimeMillis()
-            )
+            // 无条件更新时间戳，确保对话在历史记录中正确排序
+            chatMessageDao.updateConversationTimestamp(conversationId, System.currentTimeMillis())
+            // 仅在未自定义标题时更新标题 (isCustomTitle = 0)
+            chatMessageDao.updateConversationTitleIfAuto(conversationId, userInput)
         }
     }
 
