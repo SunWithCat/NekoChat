@@ -2,10 +2,12 @@ package com.sunwithcat.nekochat.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+// ================== Telegram Light Theme ==================
+val TgBlue = Color(0xFF2AABEE)       // 标志性的 Telegram 蓝
+val TgBlueDark = Color(0xFF229ED9)   // 深一点的蓝（用于状态栏等）
+val TgGreen = Color(0xFF56B357)      // 自己的消息气泡绿
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+// ================== Telegram Dark Theme ==================
+val TgDarkBackground = Color(0xFF17212B) // 深色模式背景（深蓝灰）
+val TgDarkSurface = Color(0xFF232E3C)    // 深色模式卡片/顶栏颜色
+val TgDarkPrimary = Color(0xFF5288C1)    // 深色模式下的主色调

@@ -1,6 +1,8 @@
 package com.sunwithcat.nekochat.ui
 
+import android.os.Build
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -37,6 +39,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.sunwithcat.nekochat.data.local.ApiKeyManager
@@ -54,11 +57,15 @@ object Routes {
     const val HISTORY_SCREEN = "HistoryScreen"
 }
 
+@RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    // 监听当前导航目的地
+    val currentBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = currentBackStackEntry?.destination?.route
     val context = LocalContext.current
 
     var showApikeyDialog by remember { mutableStateOf(false) }
@@ -110,6 +117,7 @@ fun AppNavigation() {
 
     ModalNavigationDrawer(
             drawerState = drawerState,
+            gesturesEnabled = currentRoute?.startsWith(Routes.CHAT_SCREEN) == true,
             drawerContent = {
                 ModalDrawerSheet(
                         drawerContainerColor =

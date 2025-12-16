@@ -1,6 +1,7 @@
 package com.sunwithcat.nekochat.ui.about
 
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -39,7 +40,6 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.activity.compose.BackHandler
 import com.sunwithcat.nekochat.R
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,15 +48,18 @@ fun AboutScreen(onBack: () -> Unit) {
     // 拦截系统返回手势，使用我们的 onBack
     BackHandler(onBack = onBack)
     val context = LocalContext.current
+
+    val colors = MaterialTheme.colorScheme
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        containerColor = colors.background,
         topBar = {
             TopAppBar(
                 colors =
                     TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        titleContentColor = MaterialTheme.colorScheme.primary,
-                        actionIconContentColor = MaterialTheme.colorScheme.primary
+                        containerColor = colors.surface,
+                        titleContentColor = colors.primary,
+                        actionIconContentColor = colors.primary,
+                        navigationIconContentColor = colors.primary
                     ),
                 title = { Text("关于 NekoChat") },
                 navigationIcon = {
