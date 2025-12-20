@@ -24,6 +24,18 @@ class ChatViewModel(private val chatRepository: ChatRepository, conversationId: 
 
     private val _currentConversationId = MutableStateFlow(conversationId)
 
+    companion object {
+        const val MODEL_FLASH_2_5 = "gemini-2.5-flash"
+        const val MODEL_FLASH_3_0 = "gemini-3-flash-preview"
+    }
+
+    private val _selectedModel = MutableStateFlow(MODEL_FLASH_2_5)
+    val selectedModel: StateFlow<String> = _selectedModel
+
+    fun onModelChange(newModel: String) {
+        _selectedModel.value = newModel
+    }
+
     init {
         // 确保_currentConversationId正确初始化，即使值相同也强制更新
         _currentConversationId.value = conversationId
@@ -120,7 +132,8 @@ class ChatViewModel(private val chatRepository: ChatRepository, conversationId: 
                 _chatHistory.value,
                 conversationId,
                 finalBase64,
-                finalMimeType
+                finalMimeType,
+                _selectedModel.value
             )
 
             _isModelProcessing.value = false

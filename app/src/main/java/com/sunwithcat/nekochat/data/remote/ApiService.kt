@@ -3,6 +3,7 @@ package com.sunwithcat.nekochat.data.remote
 // API接口定义
 import retrofit2.http.Body
 import retrofit2.http.POST
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 // 发送给AI的请求体的数据结构
@@ -37,8 +38,10 @@ data class GeminiResponse(
 data class Candidate(val content: Content)
 
 interface ApiService {
-    @POST("v1beta/models/gemini-2.5-flash:generateContent")
+    // gemini-2.5-flash
+    @POST("v1beta/models/{model}:generateContent")
     suspend fun generateContent(
+        @Path("model") model: String,
         @Body geminiRequest: GeminiRequest,
         @Query("key") apiKey: String
     ): GeminiResponse

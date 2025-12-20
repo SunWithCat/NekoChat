@@ -86,7 +86,8 @@ class ChatRepository(
         chatHistory: List<ChatMessage>,
         conversationId: Long,
         base64Image: String? = null, // 新增可选参数：图片的 Base64 编码
-        mimeType: String? = null // 新增可选参数：图片的 MIME 类型 (例如 "image/jpeg", "image/png")
+        mimeType: String? = null, // 新增可选参数：图片的 MIME 类型 (例如 "image/jpeg", "image/png")
+        modelName: String = "gemini-2.5-flash"
     ) {
         // 在网络请求前检查
         if (apiKeyManager.getApiKey().isBlank()) {
@@ -158,7 +159,11 @@ class ChatRepository(
 
             val request = GeminiRequest(contents = contents, generationConfig = generationConfig)
             val response =
-                RetrofitClient.apiService.generateContent(request, apiKeyManager.getApiKey())
+                RetrofitClient.apiService.generateContent(
+                    model = modelName,
+                    request,
+                    apiKeyManager.getApiKey(),
+                )
 
             val modelResponseText =
                 response.candidates.firstOrNull()?.content?.parts?.firstOrNull()?.text ?: ""

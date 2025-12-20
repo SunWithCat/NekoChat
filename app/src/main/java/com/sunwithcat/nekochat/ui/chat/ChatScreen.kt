@@ -9,6 +9,7 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.EaseOutQuad
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -36,6 +37,7 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Menu
@@ -44,12 +46,14 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SmallFloatingActionButton
@@ -59,6 +63,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -124,6 +129,12 @@ fun ChatScreen(
     // 用于保存输入框内容的本地状态
     var userInput by remember { mutableStateOf("") }
 
+    // 监听当前选中的模型
+    val selectedModel by viewModel.selectedModel.collectAsStateWithLifecycle()
+
+    val sheetState = rememberModalBottomSheetState()
+    var showBottomSheet by remember { mutableStateOf(false) }
+
     // 是否显示删除弹窗
     var showDeleteDialog by remember { mutableStateOf(false) }
 
@@ -155,6 +166,7 @@ fun ChatScreen(
     val showScrollToBottom by remember { derivedStateOf { lazyListState.canScrollForward } }
 
     val scope = rememberCoroutineScope() // 启动滚动协程
+
 
     // 当消息列表更新时，滚动到最新消息
     LaunchedEffect(messages.size) {
@@ -219,10 +231,12 @@ fun ChatScreen(
                 }
             )
         }
-        Column(modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)
-            .imePadding()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .imePadding()
+        ) {
             // 获取焦点管理器，用于清除焦点和文本选择
             val focusManager = LocalFocusManager.current
 
@@ -310,12 +324,111 @@ fun ChatScreen(
                     },
                     isSendingEnabled = !uiState.isModelProcessing, // 模型处理时禁用发送按钮
                     selectedImageUri = selectedImageUri,
-                    onRemoveImage = { selectedImageUri = null }
-                )
+                    onRemoveImage = { selectedImageUri = null },
+
+                    )
+                Surface(
+                    onClick = { showBottomSheet = true },
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                    modifier = Modifier.padding(vertical = 8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = null,
+                            modifier = Modifier.size(14.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = if (selectedModel == ChatViewModel.MODEL_FLASH_2_5) "Gemini 2.5 Flash" else "Gemini 3 Preview",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+                if (showBottomSheet) {
+                    ModalBottomSheet(
+                        onDismissRequest = { showBottomSheet = false },
+                        sheetState = sheetState,
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        tonalElevation = 8.dp,
+                        dragHandle = { BottomSheetDefaults.DragHandle() } // 显示那个细长的小横条
+                    ) {
+                        // 抽屉里的内容
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 32.dp, start = 24.dp, end = 24.dp)
+                        ) {
+                            Text(
+                                text = "选择 AI 大脑 ✨",
+                                style = MaterialTheme.typography.titleLarge,
+                                modifier = Modifier.padding(bottom = 16.dp)
+                            )
+                            ModelOptionTile(
+                                title = "Gemini 2.5 Flash",
+                                description = "稳定、快速，适合日常撒娇对话喵～",
+                                isSelected = selectedModel == ChatViewModel.MODEL_FLASH_2_5,
+                                onClick = {
+                                    viewModel.onModelChange(ChatViewModel.MODEL_FLASH_2_5)
+                                    showBottomSheet = false
+                                }
+                            )
+                            Spacer(Modifier.height(12.dp))
+                            ModelOptionTile(
+                                title = "Gemini 3 Flash (Preview)",
+                                description = "更聪明、更全能的先行版，快来试试呐！",
+                                isSelected = selectedModel == ChatViewModel.MODEL_FLASH_3_0,
+                                onClick = {
+                                    viewModel.onModelChange(ChatViewModel.MODEL_FLASH_3_0)
+                                    showBottomSheet = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ModelOptionTile(
+    title: String,
+    description: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(16.dp),
+        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        border = if (isSelected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.titleMedium)
                 Text(
-                    text = "Based on Google Gemini-2.5-Flash",
+                    description,
                     style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(vertical = 6.dp)
+                    modifier = Modifier.graphicsLayer(alpha = 0.7f)
+                )
+            }
+            if (isSelected) {
+                Icon(
+                    Icons.Default.Check,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
                 )
             }
         }
