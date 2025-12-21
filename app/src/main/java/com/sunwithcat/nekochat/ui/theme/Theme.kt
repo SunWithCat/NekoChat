@@ -19,7 +19,7 @@ private val DarkColorScheme = darkColorScheme(
     surface = TgDarkSurface,       // 卡片和顶栏变稍浅的深蓝灰
     onBackground = Color.White,
     onSurface = Color.White,
-    primaryContainer = TgDarkSurface, // 关键：容器颜色也设为深色
+    primaryContainer = TgDarkSurface,
     onPrimaryContainer = Color.White
 )
 
@@ -31,14 +31,14 @@ private val LightColorScheme = lightColorScheme(
     surface = Color.White,
     onBackground = Color.Black,
     onSurface = Color.Black,
-    primaryContainer = Color(0xFFF1F1F1), // 浅色模式下的容器背景（类似灰色）
+    primaryContainer = Color(0xFFF1F1F1),
     onPrimaryContainer = Color.Black
 )
 
 @Composable
 fun NekoChatTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = false,
+    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -46,6 +46,7 @@ fun NekoChatTheme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
+
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }

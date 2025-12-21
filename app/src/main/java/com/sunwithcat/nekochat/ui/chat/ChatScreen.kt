@@ -167,7 +167,6 @@ fun ChatScreen(
 
     val scope = rememberCoroutineScope() // 启动滚动协程
 
-
     // 当消息列表更新时，滚动到最新消息
     LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) {
@@ -325,13 +324,11 @@ fun ChatScreen(
                     isSendingEnabled = !uiState.isModelProcessing, // 模型处理时禁用发送按钮
                     selectedImageUri = selectedImageUri,
                     onRemoveImage = { selectedImageUri = null },
-
-                    )
+                )
                 Surface(
                     onClick = { showBottomSheet = true },
                     shape = CircleShape,
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                    modifier = Modifier.padding(vertical = 8.dp)
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
@@ -345,7 +342,10 @@ fun ChatScreen(
                         )
                         Spacer(Modifier.width(6.dp))
                         Text(
-                            text = if (selectedModel == ChatViewModel.MODEL_FLASH_2_5) "Gemini 2.5 Flash" else "Gemini 3 Preview",
+                            text =
+                                if (selectedModel == ChatViewModel.MODEL_FLASH_2_5)
+                                    "Gemini 2.5 Flash"
+                                else "Gemini 3 Preview",
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -361,9 +361,10 @@ fun ChatScreen(
                     ) {
                         // 抽屉里的内容
                         Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 32.dp, start = 24.dp, end = 24.dp)
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 32.dp, start = 24.dp, end = 24.dp)
                         ) {
                             Text(
                                 text = "选择 AI 大脑 ✨",
@@ -398,24 +399,23 @@ fun ChatScreen(
 }
 
 @Composable
-fun ModelOptionTile(
-    title: String,
-    description: String,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
+fun ModelOptionTile(title: String, description: String, isSelected: Boolean, onClick: () -> Unit) {
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(16.dp),
-        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else
-            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-        border = if (isSelected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
+        color =
+            if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f),
+        border =
+            if (isSelected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+            else
+                BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+                ),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(title, style = MaterialTheme.typography.titleMedium)
                 Text(
