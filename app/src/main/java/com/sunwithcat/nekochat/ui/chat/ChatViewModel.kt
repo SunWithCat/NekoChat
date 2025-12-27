@@ -4,6 +4,8 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.sunwithcat.nekochat.data.local.ApiKeyManager
+import com.sunwithcat.nekochat.data.local.ApiProvider
 import com.sunwithcat.nekochat.data.model.Author
 import com.sunwithcat.nekochat.data.model.ChatMessage
 import com.sunwithcat.nekochat.data.repository.ChatRepository
@@ -19,7 +21,11 @@ import java.util.UUID
 
 data class ChatUiState(val isModelProcessing: Boolean = false)
 
-class ChatViewModel(private val chatRepository: ChatRepository, conversationId: Long) :
+class ChatViewModel(
+    private val chatRepository: ChatRepository,
+    private val apiKeyManager: ApiKeyManager,
+    conversationId: Long
+) :
     ViewModel() {
 
     private val _currentConversationId = MutableStateFlow(conversationId)
@@ -36,9 +42,19 @@ class ChatViewModel(private val chatRepository: ChatRepository, conversationId: 
         _selectedModel.value = newModel
     }
 
-    init {
-        // 确保_currentConversationId正确初始化，即使值相同也强制更新
-        _currentConversationId.value = conversationId
+    val currentProvider: ApiProvider
+        get() = apiKeyManager.getProvider()
+
+    fun getCurrentModelDisplayName(): String {
+        return when (apiKeyManager.getProvider()) {
+            ApiProvider.GOOGLE -> {
+                if (_selectedModel.value == MODEL_FLASH_2_5) "Gemini 2.5 Flash"
+                else "Gemini 3 Preview"
+            }
+            ApiProvider.OPENAI -> {
+                apiKeyManager.getOpenAIModel().ifBlank { "未设置模型" }
+            }
+        }
     }
 
     private val _isModelProcessing = MutableStateFlow(false)

@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory
 import android.os.Build
 import androidx.annotation.RequiresApi
 import com.sunwithcat.nekochat.data.local.ApiKeyManager
+import com.sunwithcat.nekochat.data.local.ApiProvider
 import com.sunwithcat.nekochat.data.local.ChatMessageDao
 import com.sunwithcat.nekochat.data.local.PromptManager
 import com.sunwithcat.nekochat.data.model.Author
@@ -14,6 +15,8 @@ import com.sunwithcat.nekochat.data.model.Conversation
 import com.sunwithcat.nekochat.data.remote.Content
 import com.sunwithcat.nekochat.data.remote.GeminiRequest
 import com.sunwithcat.nekochat.data.remote.GenerationConfig
+import com.sunwithcat.nekochat.data.remote.OpenAIMessage
+import com.sunwithcat.nekochat.data.remote.OpenAIRequest
 import com.sunwithcat.nekochat.data.remote.Part
 import com.sunwithcat.nekochat.data.remote.RetrofitClient
 import kotlinx.coroutines.flow.Flow
@@ -22,6 +25,7 @@ import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
+
 
 class ChatRepository(
     private val chatMessageDao: ChatMessageDao,
@@ -80,6 +84,13 @@ class ChatRepository(
         )
     }
 
+    private fun ChatMessage.toOpenAIMessage(): OpenAIMessage {
+        return OpenAIMessage(
+            role = if (author == Author.USER) "user" else "assistant",
+            content = content
+        )
+    }
+
     @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
     suspend fun fetchModelResponse(
         userInput: String,
@@ -89,6 +100,36 @@ class ChatRepository(
         mimeType: String? = null, // 新增可选参数：图片的 MIME 类型 (例如 "image/jpeg", "image/png")
         modelName: String = "gemini-2.5-flash"
     ) {
+        val conversation = chatMessageDao.getConversationById(conversationId)
+        val systemPrompt = conversation?.customSystemPrompt?.takeIf { it.isNotBlank() }
+            ?: promptManager.getPrompt()
+        val temperature = conversation?.customTemperature ?: promptManager.getTemperature()
+        val historyLength = conversation?.customHistoryLength ?: promptManager.getLength()
+
+        when (apiKeyManager.getProvider()) {
+            ApiProvider.OPENAI -> {
+                fetchOpenAIResponse(
+                    userInput = userInput,
+                    chatHistory = chatHistory,
+                    conversationId = conversationId,
+                    systemPrompt = systemPrompt,
+                    temperature = temperature,
+                    historyLength = historyLength
+                )
+                chatMessageDao.updateConversationTimestamp(
+                    conversationId,
+                    System.currentTimeMillis()
+                )
+                chatMessageDao.updateConversationTitleIfAuto(conversationId, userInput)
+                return
+            }
+
+            ApiProvider.GOOGLE -> {
+
+            }
+        }
+
+
         // 在网络请求前检查
         if (apiKeyManager.getApiKey().isBlank()) {
             val apiKeyMissingError =
@@ -107,15 +148,6 @@ class ChatRepository(
                     !it.content.startsWith("Error:") && !it.content.startsWith("喵...")
                 }
 
-            // 获取对话配置 (如果存在)
-            val conversation = chatMessageDao.getConversationById(conversationId)
-
-            // 确定最终使用的配置 (优先使用对话独立配置，否则使用全局配置)
-            val systemPrompt =
-                conversation?.customSystemPrompt?.takeIf { it.isNotBlank() }
-                    ?: promptManager.getPrompt()
-            val temperature = conversation?.customTemperature ?: promptManager.getTemperature()
-            val historyLength = conversation?.customHistoryLength ?: promptManager.getLength()
 
             if (historyForApi.isEmpty()) {
                 val systemPromptMessage = ChatMessage(content = systemPrompt, author = Author.MODEL)
@@ -220,6 +252,97 @@ class ChatRepository(
             chatMessageDao.updateConversationTimestamp(conversationId, System.currentTimeMillis())
             // 仅在未自定义标题时更新标题 (isCustomTitle = 0)
             chatMessageDao.updateConversationTitleIfAuto(conversationId, userInput)
+        }
+    }
+
+    // OpenAI 回复
+    private suspend fun fetchOpenAIResponse(
+        userInput: String,
+        chatHistory: List<ChatMessage>,
+        conversationId: Long,
+        systemPrompt: String,
+        temperature: Float,
+        historyLength: Int
+    ) {
+        try {
+            val baseUrl = apiKeyManager.getOpenAIBaseUrl()
+            val apiKey = apiKeyManager.getOpenAIApiKey()
+            val modelName = apiKeyManager.getOpenAIModel()
+
+            if (baseUrl.isBlank() || apiKey.isBlank()) {
+                val errorEntity = ChatMessageEntity(
+                    conversationId = conversationId,
+                    content = "喵~ 主人还没有设置 OpenAI 的 URL 或 API Key 呐！",
+                    author = Author.MODEL.name
+                )
+                chatMessageDao.insertMessage(errorEntity)
+                return
+            }
+
+            if (modelName.isBlank()) {
+                val errorEntity = ChatMessageEntity(
+                    conversationId = conversationId,
+                    content = "喵~ 主人还没有设置模型名称呐！",
+                    author = Author.MODEL.name
+                )
+                chatMessageDao.insertMessage(errorEntity)
+                return
+            }
+
+            // 过滤错误消息
+            var historyForApi = chatHistory.filter {
+                !it.content.startsWith("Error:") && !it.content.startsWith("喵...")
+            }
+
+            val messages = mutableListOf<OpenAIMessage>()
+            messages.add(OpenAIMessage(role = "system", content = systemPrompt))
+
+            historyForApi.takeLast(historyLength).forEach {
+                messages.add(it.toOpenAIMessage())
+            }
+
+            messages.add(OpenAIMessage(role = "user", content = userInput))
+
+            val request = OpenAIRequest(
+                model = modelName,
+                messages = messages,
+                temperature = temperature
+            )
+
+            val apiService = RetrofitClient.createOpenAIService(baseUrl, apiKey)
+            val response = apiService.chatCompletions(request)
+
+            val modelResponseText = response.choices.firstOrNull()?.message?.content ?: ""
+
+            if (modelResponseText.isNotEmpty()) {
+                val modelMessageEntity = ChatMessageEntity(
+                    conversationId = conversationId,
+                    content = modelResponseText,
+                    author = Author.MODEL.name
+                )
+                chatMessageDao.insertMessage(modelMessageEntity)
+            }
+        } catch (e: retrofit2.HttpException) {
+            val errorMessage = when (e.code()) {
+                401 -> "Error: 401 Unauthorized. 喵? API Key 好像不对..."
+                404 -> "Error: 404 Not Found. 喵? 找不到这个接口..."
+                429 -> "Error: 429 Too Many Requests. 喵! 请求太频繁了!"
+                500 -> "Error: 500 Server Error. 喵... 服务器出问题了..."
+                else -> "Error: ${e.code()} ${e.message()}"
+            }
+            val errorEntity = ChatMessageEntity(
+                conversationId = conversationId,
+                content = errorMessage,
+                author = Author.MODEL.name
+            )
+            chatMessageDao.insertMessage(errorEntity)
+        } catch (e: Exception) {
+            val errorEntity = ChatMessageEntity(
+                conversationId = conversationId,
+                content = "Error: ${e.message}",
+                author = Author.MODEL.name
+            )
+            chatMessageDao.insertMessage(errorEntity)
         }
     }
 

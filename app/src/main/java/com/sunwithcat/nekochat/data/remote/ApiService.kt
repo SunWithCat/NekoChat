@@ -40,9 +40,37 @@ data class Candidate(val content: Content)
 interface ApiService {
     // gemini-2.5-flash
     @POST("v1beta/models/{model}:generateContent")
+
     suspend fun generateContent(
         @Path("model") model: String,
         @Body geminiRequest: GeminiRequest,
         @Query("key") apiKey: String
     ): GeminiResponse
+
+    // OpenAI 兼容
+    @POST("chat/completions")
+    suspend fun chatCompletions(
+        @Body request: OpenAIRequest,
+    ): OpenAIResponse
 }
+
+// OpenAI 兼容的请求体
+data class OpenAIRequest(
+    val model: String,
+    val messages: List<OpenAIMessage>,
+    val stream: Boolean = false,
+    val temperature: Float? = null
+)
+
+data class OpenAIMessage(
+    val role: String, // assistant,user,system
+    val content: String
+)
+
+data class OpenAIResponse(
+    val choices: List<OpenAIChoice>
+)
+
+data class OpenAIChoice(
+    val message: OpenAIMessage
+)

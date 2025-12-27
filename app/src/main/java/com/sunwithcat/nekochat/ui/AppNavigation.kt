@@ -44,6 +44,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.sunwithcat.nekochat.data.local.ApiKeyManager
 import com.sunwithcat.nekochat.ui.about.AboutScreen
+import com.sunwithcat.nekochat.ui.apisettings.ApiSettingsScreen
 import com.sunwithcat.nekochat.ui.chat.ApiKeyInputDialog
 import com.sunwithcat.nekochat.ui.chat.ChatScreen
 import com.sunwithcat.nekochat.ui.history.HistoryScreen
@@ -55,6 +56,7 @@ object Routes {
     const val SETTINGS_SCREEN = "SettingsScreen"
     const val ABOUT_SCREEN = "AboutScreen"
     const val HISTORY_SCREEN = "HistoryScreen"
+    const val API_SETTINGS_SCREEN = "ApiSettingsScreen"
 }
 
 @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
@@ -146,12 +148,12 @@ fun AppNavigation() {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 NavigationDrawerItem(
-                    icon = { Icon(Icons.Default.VpnKey, contentDescription = "设置API Key") },
-                    label = { Text(text = "设置API Key") },
+                    icon = { Icon(Icons.Default.VpnKey, contentDescription = "API 设置") },
+                    label = { Text(text = "API 设置") },
                     selected = false,
                     onClick = {
                         scope.launch { drawerState.close() }
-                        showApikeyDialog = true
+                        navController.navigate(Routes.API_SETTINGS_SCREEN)
                     },
                     modifier = Modifier.padding(horizontal = 12.dp)
                 )
@@ -270,6 +272,9 @@ fun AppNavigation() {
                         navigateToChat(navController, conversationId)
                     }
                 )
+            }
+            composable(Routes.API_SETTINGS_SCREEN) {
+                ApiSettingsScreen(onBack = safePopBackStack)
             }
         }
     }

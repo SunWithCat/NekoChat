@@ -22,7 +22,8 @@ class ChatViewModelFactory(private val context: Context, private val conversatio
             val repository =
                     ChatRepository(dao, promptManager, apiKeyManager, context.applicationContext)
             // 创建 ViewModel
-            @Suppress("UNCHECKED_CAST") return ChatViewModel(repository, conversationId) as T
+            @Suppress("UNCHECKED_CAST")
+            return ChatViewModel(repository, apiKeyManager, conversationId) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

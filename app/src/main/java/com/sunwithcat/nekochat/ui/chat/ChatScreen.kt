@@ -94,6 +94,7 @@ import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
 import com.sunwithcat.nekochat.R
 import com.sunwithcat.nekochat.data.local.ApiKeyManager
+import com.sunwithcat.nekochat.data.local.ApiProvider
 import com.sunwithcat.nekochat.data.local.AvatarManager
 import com.sunwithcat.nekochat.data.model.Author
 import com.sunwithcat.nekochat.data.model.ChatMessage
@@ -150,13 +151,14 @@ fun ChatScreen(
 
     // 首次进入检查 API 密钥是否为空
     LaunchedEffect(conversationId) {
-        if (conversationId == -1L) {
+        if (conversationId == -1L && !AppSessionManager.hasShownApiKeyPromptThisSession) {
             val apiKeyManager = ApiKeyManager(context)
-            if (apiKeyManager.getApiKey().isBlank() &&
-                !AppSessionManager.hasShownApiKeyPromptThisSession
+            if (apiKeyManager.getProvider() == ApiProvider.GOOGLE && apiKeyManager.getApiKey()
+                    .isBlank()
             ) {
                 onShowApiKeyDialog()
             }
+
         }
     }
 
@@ -326,7 +328,11 @@ fun ChatScreen(
                     onRemoveImage = { selectedImageUri = null },
                 )
                 Surface(
-                    onClick = { showBottomSheet = true },
+                    onClick = {
+                        if (viewModel.currentProvider == ApiProvider.GOOGLE) {
+                            showBottomSheet = true
+                        }
+                    },
                     shape = CircleShape,
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
                 ) {
@@ -343,15 +349,13 @@ fun ChatScreen(
                         Spacer(Modifier.width(6.dp))
                         Text(
                             text =
-                                if (selectedModel == ChatViewModel.MODEL_FLASH_2_5)
-                                    "Gemini 2.5 Flash"
-                                else "Gemini 3 Preview",
+                                viewModel.getCurrentModelDisplayName(),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
-                if (showBottomSheet) {
+                if (showBottomSheet && viewModel.currentProvider == ApiProvider.GOOGLE) {
                     ModalBottomSheet(
                         onDismissRequest = { showBottomSheet = false },
                         sheetState = sheetState,
