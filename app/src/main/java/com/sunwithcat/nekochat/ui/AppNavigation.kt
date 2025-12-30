@@ -61,7 +61,10 @@ object Routes {
 
 @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
 @Composable
-fun AppNavigation() {
+fun AppNavigation(
+    currentThemeMode: Int = 0,
+    onThemeModeChange: (Int) -> Unit = {}
+) {
     val navController = rememberNavController()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -274,7 +277,11 @@ fun AppNavigation() {
                 )
             }
             composable(Routes.API_SETTINGS_SCREEN) {
-                ApiSettingsScreen(onBack = safePopBackStack)
+                ApiSettingsScreen(
+                    onBack = safePopBackStack,
+                    currentThemeMode = currentThemeMode,
+                    onThemeModeChange = onThemeModeChange
+                )
             }
         }
     }

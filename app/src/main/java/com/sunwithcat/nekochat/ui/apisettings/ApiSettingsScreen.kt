@@ -18,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -32,6 +33,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -43,11 +45,12 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.sunwithcat.nekochat.data.local.ApiKeyManager
 import com.sunwithcat.nekochat.data.local.ApiProvider
+import com.sunwithcat.nekochat.data.local.ThemeManager
 import com.sunwithcat.nekochat.ui.settings.SettingsSection
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ApiSettingsScreen(onBack: () -> Unit) {
+fun ApiSettingsScreen(onBack: () -> Unit, currentThemeMode: Int, onThemeModeChange: (Int) -> Unit) {
     BackHandler { onBack() }
 
     val context = LocalContext.current
@@ -58,11 +61,12 @@ fun ApiSettingsScreen(onBack: () -> Unit) {
     var openaiBaseUrl by remember { mutableStateOf(apiKeyManager.getOpenAIBaseUrl()) }
     var openaiApiKey by remember { mutableStateOf(apiKeyManager.getOpenAIApiKey()) }
     var openaiModel by remember { mutableStateOf(apiKeyManager.getOpenAIModel()) }
+    var selectedThemeMode by remember { mutableIntStateOf(currentThemeMode) }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("API 设置") },
+                title = { Text("设置") },
                 colors = TopAppBarDefaults.topAppBarColors(
                     titleContentColor = MaterialTheme.colorScheme.primary,
                     navigationIconContentColor = MaterialTheme.colorScheme.primary,
@@ -84,6 +88,7 @@ fun ApiSettingsScreen(onBack: () -> Unit) {
                             apiKeyManager.saveOpenAIApiKey(openaiApiKey)
                             apiKeyManager.saveOpenAIBaseUrl(openaiBaseUrl)
                             apiKeyManager.saveOpenAIModel(openaiModel)
+                            onThemeModeChange(selectedThemeMode)
                             Toast.makeText(context, "保存成功喵~", Toast.LENGTH_SHORT).show()
                             onBack()
                         }
@@ -103,6 +108,32 @@ fun ApiSettingsScreen(onBack: () -> Unit) {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
+            SettingsSection(
+                title = "主题",
+                icon = Icons.Default.DarkMode,
+                content = {
+                    Column(Modifier.selectableGroup()) {
+                        ThemeOptionRow(
+                            title = "跟随系统",
+                            description = "自动适应系统的深浅色设置",
+                            selected = selectedThemeMode == ThemeManager.MODE_SYSTEM,
+                            onClick = { selectedThemeMode = ThemeManager.MODE_SYSTEM }
+                        )
+                        ThemeOptionRow(
+                            title = "浅色模式",
+                            description = "始终使用浅色主题",
+                            selected = selectedThemeMode == ThemeManager.MODE_LIGHT,
+                            onClick = { selectedThemeMode = ThemeManager.MODE_LIGHT }
+                        )
+                        ThemeOptionRow(
+                            title = "深色模式",
+                            description = "始终使用深色主题，保护眼睛喵~",
+                            selected = selectedThemeMode == ThemeManager.MODE_DARK,
+                            onClick = { selectedThemeMode = ThemeManager.MODE_DARK }
+                        )
+                    }
+                }
+            )
             SettingsSection(
                 title = "选择 API 提供商",
                 icon = Icons.Default.Cloud,
@@ -134,11 +165,13 @@ fun ApiSettingsScreen(onBack: () -> Unit) {
                             }
                         }
                         Row(
-                            Modifier.fillMaxWidth().selectable(
-                                selected = selectedProvider == ApiProvider.OPENAI,
-                                onClick = { selectedProvider = ApiProvider.OPENAI },
-                                role = Role.RadioButton
-                            )
+                            Modifier
+                                .fillMaxWidth()
+                                .selectable(
+                                    selected = selectedProvider == ApiProvider.OPENAI,
+                                    onClick = { selectedProvider = ApiProvider.OPENAI },
+                                    role = Role.RadioButton
+                                )
                                 .padding(vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -170,8 +203,8 @@ fun ApiSettingsScreen(onBack: () -> Unit) {
                             value = googleApiKey,
                             onValueChange = { googleApiKey = it },
                             modifier = Modifier.fillMaxWidth(),
-                            label = {Text("API Key") },
-                            placeholder = {Text("输入你的 Google API Key")},
+                            label = { Text("API Key") },
+                            placeholder = { Text("输入你的 Google API Key") },
                             visualTransformation = PasswordVisualTransformation(),
                             singleLine = true
                         )
@@ -215,6 +248,36 @@ fun ApiSettingsScreen(onBack: () -> Unit) {
                     }
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun ThemeOptionRow(
+    title: String,
+    description: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .selectable(selected = selected, onClick = onClick, role = Role.RadioButton)
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        RadioButton(
+            selected = selected,
+            onClick = null
+        )
+        Spacer(Modifier.width(8.dp))
+        Column {
+            Text(title, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
