@@ -1,5 +1,6 @@
 package com.sunwithcat.nekochat
 
+import android.app.Activity
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -10,11 +11,15 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 import com.sunwithcat.nekochat.data.local.ThemeManager
 import com.sunwithcat.nekochat.ui.AppNavigation
 import com.sunwithcat.nekochat.ui.theme.NekoChatTheme
@@ -33,6 +38,8 @@ class MainActivity : ComponentActivity() {
                 ThemeManager.MODE_DARK -> true
                 else -> isSystemInDarkTheme()
             }
+            
+            SetStatusBarIconColor(darkTheme)
 
             NekoChatTheme(darkTheme = darkTheme) {
                 Surface(
@@ -49,5 +56,14 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+}
+
+@Composable
+fun SetStatusBarIconColor(darkTheme: Boolean) {
+    val view = LocalView.current
+    SideEffect {
+        val window = (view.context as Activity).window
+        WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
     }
 }
